@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<div class="max-w-4xl mx-auto mt-10 bg-white shadow-2xl rounded-2xl p-8">
+  <h2 class="text-2xl font-semibold mb-6 text-pink-700">Customer Search</h2>
+
+  <!-- SEARCH FORM -->
+  <form method="get" action="{{ url_for('new_customer') }}" class="flex gap-3">
+    <input type="text" name="search" placeholder="Enter name, phone, or email"
+           class="flex-grow border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+           value="{{ request.args.get('search', '') }}">
+    <button type="submit"
+            class="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-lg transition">
+      Search
+    </button>
+  </form>
+
+  {% if customer %}
+    <!-- EXISTING CUSTOMER -->
+    <div class="mt-8">
+      <h3 class="text-xl font-semibold text-green-700 mb-4">Customer Found: Edit Details</h3>
+      <form method="POST" action="{{ url_for('new_customer') }}" class="space-y-4">
+        <input type="hidden" name="cust_id" value="{{ customer.id }}">
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="font-semibold">Name</label>
+            <input type="text" name="name" value="{{ customer.name }}" class="w-full border rounded-lg px-3 py-2">
+          </div>
+          <div>
+            <label class="font-semibold">Phone</label>
+            <input type="text" name="phone" value="{{ customer.phone }}" class="w-full border rounded-lg px-3 py-2" required>
+          </div>
+          <div>
+            <label class="font-semibold">Email</label>
+            <input type="email" name="email" value="{{ customer.email }}" class="w-full border rounded-lg px-3 py-2" required>
+          </div>
+          <div class="col-span-2">
+            <label class="font-semibold">Address</label>
+            <textarea name="address" class="w-full border rounded-lg px-3 py-2">{{ customer.address }}</textarea>
+          </div>
+        </div>
+
+        <h4 class="mt-6 font-semibold text-pink-700">Top Measurements (Kurta / Dress)</h4>
+        <div class="grid grid-cols-3 gap-3">
+          {% for field in ['shoulder','bust','top_waist','top_hip','armhole','sleeve_length','top_length'] %}
+          <input type="text" name="{{ field }}" placeholder="{{ field.replace('_',' ').title() }}"
+                 class="border rounded-lg px-3 py-2"
+                 value="{{ customer.measurements.top[field.split('_')[1] if '_' in field else field] if customer.measurements.top }}">
+          {% endfor %}
+        </div>
+
+        <h4 class="mt-6 font-semibold text-pink-700">Bottom Measurements (Lehenga / Pant / Salwar)</h4>
+        <div class="grid grid-cols-3 gap-3">
+          {% for field in ['bottom_waist','bottom_hip','thigh','knee','bottom_length'] %}
+          <input type="text" name="{{ field }}" placeholder="{{ field.replace('_',' ').title() }}"
+                 class="border rounded-lg px-3 py-2"
+                 value="{{ customer.measurements.bottom[field.split('_')[1] if '_' in field else field] if customer.measurements.bottom }}">
+          {% endfor %}
+        </div>
+
+        <div class="mt-6">
+          <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">Update Customer</button>
+        </div>
+      </form>
+    </div>
+
+  {% elif not_found %}
+    <!-- CUSTOMER NOT FOUND -->
+    <div class="mt-8 text-red-600 font-semibold">
+      Customer does not exist. Please add new customer below.
+    </div>
+
+    <!-- ADD NEW CUSTOMER FORM -->
+    <form method="POST" action="{{ url_for('new_customer') }}" class="space-y-4 mt-6">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="font-semibold">Name</label>
+          <input type="text" name="name" placeholder="Full name" class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div>
+          <label class="font-semibold">Phone</label>
+          <input type="text" name="phone" required placeholder="10-digit phone" class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div>
+          <label class="font-semibold">Email</label>
+          <input type="email" name="email" required placeholder="Email address" class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div class="col-span-2">
+          <label class="font-semibold">Address</label>
+          <textarea name="address" placeholder="H.No., Sector, City, State, PIN" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+
+      <h4 class="mt-6 font-semibold text-pink-700">Top Measurements</h4>
+      <div class="grid grid-cols-3 gap-3">
+        {% for field in ['shoulder','bust','top_waist','top_hip','armhole','sleeve_length','top_length'] %}
+        <input type="text" name="{{ field }}" placeholder="{{ field.replace('_',' ').title() }}" class="border rounded-lg px-3 py-2">
+        {% endfor %}
+      </div>
+
+      <h4 class="mt-6 font-semibold text-pink-700">Bottom Measurements</h4>
+      <div class="grid grid-cols-3 gap-3">
+        {% for field in ['bottom_waist','bottom_hip','thigh','knee','bottom_length'] %}
+        <input type="text" name="{{ field }}" placeholder="{{ field.replace('_',' ').title() }}" class="border rounded-lg px-3 py-2">
+        {% endfor %}
+      </div>
+
+      <div class="mt-6">
+        <button type="submit" class="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-lg">Add Customer</button>
+      </div>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+# python3 -m pip install --upgrade pip setuptools wheel
+# pip3 install grpcio --no-cache-dir
+
+flask
+grpcio==1.62.2
+firebase-admin
+
+
+#pip install grpcio --use-pep517 --no-build-isolation
+#pip install firebase-admin --no-deps
+#pip install flask google-cloud-firestore google-auth grpcio-status
+
+# Test install
+# python3 -c "import firebase_admin; print('Firebase working!')"

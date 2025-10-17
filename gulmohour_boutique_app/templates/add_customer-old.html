@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Add Customer{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
+
+    <h1 class="text-3xl font-bold mb-6 text-rose-600">Add New Customer</h1>
+
+    {% if not_found_query %}
+    <p class="mb-4 text-yellow-700">Customer '{{ not_found_query }}' does not exist. Please add details below.</p>
+    {% endif %}
+
+    <form method="post" class="space-y-6">
+
+        <!-- Personal Info -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="text" name="name" placeholder="Name"
+                   class="border border-gray-300 rounded px-4 py-2 w-full"
+                   value="{{ customer.name if customer else '' }}" required>
+            <input type="text" name="phone" placeholder="Phone"
+                   class="border border-gray-300 rounded px-4 py-2 w-full"
+                   value="{{ customer.phone if customer else '' }}" required>
+        </div>
+        <input type="email" name="email" placeholder="Email"
+               class="border border-gray-300 rounded px-4 py-2 w-full"
+               value="{{ customer.email if customer else '' }}" required>
+
+        <!-- Address -->
+        <h2 class="text-xl font-semibold text-rose-600 mt-4">Address</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="text" name="house" placeholder="House/Flat"
+                   class="border border-gray-300 rounded px-4 py-2 w-full">
+            <input type="text" name="locality" placeholder="Locality"
+                   class="border border-gray-300 rounded px-4 py-2 w-full">
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="text" name="city" placeholder="City" class="border border-gray-300 rounded px-4 py-2 w-full">
+            <input type="text" name="state" placeholder="State" class="border border-gray-300 rounded px-4 py-2 w-full">
+            <input type="text" name="pin" placeholder="PIN" class="border border-gray-300 rounded px-4 py-2 w-full">
+        </div>
+
+        <!-- Measurements -->
+        <h2 class="text-xl font-semibold text-rose-600 mt-4">Measurements (Top)</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for m in ['shoulder','bust','waist','hip','armhole','sleeve_length','top_length','neck','front_neck','back_neck'] %}
+            <input type="text" name="{{ m }}" placeholder="{{ m.replace('_',' ').title() }}"
+                   class="border border-gray-300 rounded px-4 py-2 w-full">
+            {% endfor %}
+        </div>
+
+        <h2 class="text-xl font-semibold text-rose-600 mt-4">Measurements (Bottom)</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for m in ['waist_b','hip_b','thigh','knee','calf','ankle','bottom_length'] %}
+            <input type="text" name="{{ m }}" placeholder="{{ m.replace('_',' ').title() }}"
+                   class="border border-gray-300 rounded px-4 py-2 w-full">
+            {% endfor %}
+        </div>
+
+        <button type="submit"
+                class="bg-rose-500 text-white px-6 py-2 rounded hover:bg-rose-600 mt-4">
+            Add Customer
+        </button>
+    </form>
+</div>
+{% endblock %}
