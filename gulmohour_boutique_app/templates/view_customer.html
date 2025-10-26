@@ -66,6 +66,18 @@
     </div>
   </div>
 
+  <!-- Customer Financial Summary -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-green-50 border border-green-200 p-5 rounded-lg">
+      <h4 class="text-gray-700 font-medium mb-2">Total Revenue Collected</h4>
+      <p class="text-2xl font-bold text-green-700">₹ {{ customer_financials.total_revenue }}</p>
+    </div>
+    <div class="bg-red-50 border border-red-200 p-5 rounded-lg">
+      <h4 class="text-gray-700 font-medium mb-2">Total Outstanding</h4>
+      <p class="text-2xl font-bold text-red-700">₹ {{ customer_financials.total_outstanding }}</p>
+    </div>
+  </div>
+
   <!-- Orders Section -->
   <div class="flex justify-between items-center mb-4 pt-4 border-t">
     <h3 class="text-2xl font-serif text-rosepink-600">Orders</h3>
@@ -75,50 +87,63 @@
     </a>
   </div>
 
-  {% if orders %}
-  <div class="overflow-x-auto shadow-lg rounded-xl">
-    <table class="min-w-full bg-white">
-      <thead>
-        <tr class="bg-rosepink-100 text-gray-700 uppercase text-xs">
-          <th class="px-4 py-3 text-left">Dress Type</th>
-          <th class="px-4 py-3 text-left">Delivery Date</th>
-          <th class="px-4 py-3 text-left">Price (₹)</th>
-          <th class="px-4 py-3 text-left">Status</th>
-          <th class="px-4 py-3 text-center">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        {% for o in orders %}
-        <tr class="hover:bg-rosepink-50 transition">
-          <td class="px-4 py-3 font-medium text-gray-800">{{ o.dress_type }}</td>
-          <td class="px-4 py-3 text-sm">{{ o.delivery_date }}</td>
-          <td class="px-4 py-3 text-sm">{{ o.price }}</td>
-          <td class="px-4 py-3">
-            {% set status_class = {
-              'Pending': 'bg-red-100 text-red-700',
-              'In Progress': 'bg-yellow-100 text-yellow-700',
-              'Delivered': 'bg-green-100 text-green-700'
-            }.get(o.status, 'bg-gray-100 text-gray-700') %}
-            <span class="px-3 py-1 text-xs font-semibold rounded-full {{ status_class }}">
-                {{ o.status }}
-            </span>
-          </td>
-          <td class="px-4 py-3 text-center space-x-2 whitespace-nowrap">
-            <a href="{{ url_for('edit_order', order_id=o.id) }}"
-               class="px-3 py-1 bg-rosepink-500 text-white rounded-lg hover:bg-rosepink-600 text-sm transition">Edit</a>
-            <form method="POST" action="{{ url_for('delete_order', order_id=o.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this order?');">
-                <button type="submit" class="px-3 py-1 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 text-sm transition">Delete</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div class="text-center py-6 border rounded-lg bg-gray-50">
-      <p class="text-gray-500">No orders placed yet for {{ customer.name }}.</p>
-  </div>
-  {% endif %}
+<!-- Orders Section -->
+<div class="flex justify-between items-center mb-4 pt-4 border-t">
+  <h3 class="text-2xl font-serif text-rosepink-600">Orders</h3>
+  <a href="{{ url_for('new_order', customer_id=customer.id) }}" 
+     class="px-4 py-2 bg-rosepink-500 text-white rounded-lg hover:bg-rosepink-600 transition text-sm font-medium">
+     + Add New Order
+  </a>
+</div>
+
+{% if orders %}
+<div class="overflow-x-auto shadow-lg rounded-xl">
+  <table class="min-w-full bg-white">
+    <thead>
+      <tr class="bg-rosepink-100 text-gray-700 uppercase text-xs">
+        <th class="px-4 py-3 text-left">Dress Type</th>
+        <th class="px-4 py-3 text-left">Delivery Date</th>
+        <th class="px-4 py-3 text-left">Price (₹)</th>
+        <th class="px-4 py-3 text-left">Paid (₹)</th>
+        <th class="px-4 py-3 text-left">Balance (₹)</th>
+        <th class="px-4 py-3 text-left">Status</th>
+        <th class="px-4 py-3 text-center">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for o in orders %}
+      <tr class="hover:bg-rosepink-50 transition">
+        <td class="px-4 py-3 font-medium text-gray-800">{{ o.dress_type }}</td>
+        <td class="px-4 py-3 text-sm">{{ o.delivery_date }}</td>
+        <td class="px-4 py-3 text-sm">{{ o.price }}</td>
+        <td class="px-4 py-3 text-sm text-green-700 font-semibold">{{ o.paid_amount or 0 }}</td>
+        <td class="px-4 py-3 text-sm text-red-700 font-semibold">{{ o.balance_due or o.price }}</td>
+        <td class="px-4 py-3">
+          {% set status_class = {
+            'Pending': 'bg-red-100 text-red-700',
+            'In Progress': 'bg-yellow-100 text-yellow-700',
+            'Delivered': 'bg-green-100 text-green-700'
+          }.get(o.status, 'bg-gray-100 text-gray-700') %}
+          <span class="px-3 py-1 text-xs font-semibold rounded-full {{ status_class }}">
+            {{ o.status }}
+          </span>
+        </td>
+        <td class="px-4 py-3 text-center space-x-2 whitespace-nowrap">
+          <a href="{{ url_for('edit_order', order_id=o.id) }}" class="px-3 py-1 bg-rosepink-500 text-white rounded-lg hover:bg-rosepink-600 text-sm transition">Edit</a>
+          <form method="POST" action="{{ url_for('delete_order', order_id=o.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this order?');">
+            <button type="submit" class="px-3 py-1 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 text-sm transition">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="text-center py-6 border rounded-lg bg-gray-50">
+  <p class="text-gray-500">No orders placed yet for {{ customer.name }}.</p>
+</div>
+{% endif %}
+
 </div>
 {% endblock %}

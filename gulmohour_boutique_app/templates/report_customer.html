@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Report - {{ customer.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-6 bg-white rounded-2xl shadow-xl mt-4">
+
+  <h2 class="text-3xl font-serif text-rosepink-700 font-bold mb-6">Customer Report: {{ customer.name }}</h2>
+
+  <!-- Financial Summary -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-green-50 border border-green-200 p-5 rounded-lg text-center">
+      <h4 class="text-gray-700 font-medium mb-2">Total Revenue</h4>
+      <p class="text-2xl font-bold text-green-700">₹ {{ total_revenue }}</p>
+    </div>
+    <div class="bg-blue-50 border border-blue-200 p-5 rounded-lg text-center">
+      <h4 class="text-gray-700 font-medium mb-2">Total Paid</h4>
+      <p class="text-2xl font-bold text-blue-700">₹ {{ total_paid }}</p>
+    </div>
+    <div class="bg-red-50 border border-red-200 p-5 rounded-lg text-center">
+      <h4 class="text-gray-700 font-medium mb-2">Total Outstanding</h4>
+      <p class="text-2xl font-bold text-red-700">₹ {{ total_outstanding }}</p>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="mb-8">
+    <canvas id="customerChart" class="w-full h-96"></canvas>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="overflow-x-auto shadow-lg rounded-xl">
+    <table class="min-w-full bg-white">
+      <thead>
+        <tr class="bg-rosepink-100 text-gray-700 uppercase text-xs">
+          <th class="px-4 py-3 text-left">Order ID</th>
+          <th class="px-4 py-3 text-left">Dress Type</th>
+          <th class="px-4 py-3 text-left">Price (₹)</th>
+          <th class="px-4 py-3 text-left">Paid (₹)</th>
+          <th class="px-4 py-3 text-left">Balance (₹)</th>
+          <th class="px-4 py-3 text-left">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for o in graph_data.orders %}
+        <tr class="hover:bg-rosepink-50 transition">
+          <td class="px-4 py-3">{{ o }}</td>
+          <td class="px-4 py-3 text-sm">{{ o }}</td>
+          <td class="px-4 py-3 text-sm">{{ graph_data.revenue[loop.index0] }}</td>
+          <td class="px-4 py-3 text-sm text-green-700 font-semibold">{{ graph_data.paid[loop.index0] }}</td>
+          <td class="px-4 py-3 text-sm text-red-700 font-semibold">{{ graph_data.balance[loop.index0] }}</td>
+          <td class="px-4 py-3 text-sm">—</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('customerChart').getContext('2d');
+const customerChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ graph_data.orders|tojson }},
+        datasets: [
+            {
+                label: 'Revenue',
+                data: {{ graph_data.revenue|tojson }},
+                backgroundColor: 'rgba(34,197,94,0.6)'
+            },
+            {
+                label: 'Paid',
+                data: {{ graph_data.paid|tojson }},
+                backgroundColor: 'rgba(59,130,246,0.6)'
+            },
+            {
+                label: 'Outstanding',
+                data: {{ graph_data.balance|tojson }},
+                backgroundColor: 'rgba(239,68,68,0.6)'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Orders Financial Overview' }
+        }
+    }
+});
+</script>
+{% endblock %}

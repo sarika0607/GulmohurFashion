@@ -144,7 +144,7 @@ def fetch_all_orders(customer_id=None):
 
     if customer_id:
         query = query.where('customer_id', '==', customer_id)
-        flash(f"Showing orders for customer ID: {customer_id}", 'info')
+        print(f"Showing orders for customer ID: {customer_id}", 'info')
 
         
     try:
@@ -469,15 +469,38 @@ def edit_customer(customer_id):
 
 @app.route('/customer/<customer_id>')
 def view_customer(customer_id):
-    """View customer profile, including measurements and linked orders."""
+    """View customer profile, including measurements, linked orders, and financials."""
     customer = get_customer_by_id(customer_id)
     if not customer:
         flash("Customer not found.", 'error')
         return redirect(url_for('customers'))
-        
+
     orders = fetch_all_orders(customer_id=customer_id)
 
-    return render_template('view_customer.html', customer=customer, orders=orders)
+    # Compute financials per order and overall for this customer
+    total_revenue = 0
+    total_outstanding = 0
+    for o in orders:
+        price = float(o.get('price', 0))
+        payments = o.get('payments', [])
+        paid_amount = sum([float(p.get('amount', 0)) for p in payments])
+        balance_due = max(price - paid_amount, 0)
+        o['paid_amount'] = paid_amount
+        o['balance_due'] = balance_due
+        total_revenue += paid_amount
+        total_outstanding += balance_due
+
+    customer_financials = {
+        'total_revenue': total_revenue,
+        'total_outstanding': total_outstanding
+    }
+
+    return render_template(
+        'view_customer.html',
+        customer=customer,
+        orders=orders,
+        customer_financials=customer_financials
+    )
 
 
 # --- Order Management ---
@@ -622,6 +645,79 @@ def daily_tasks():
         due_orders=due_orders, 
         today=today.strftime('%A, %B %d, %Y')
     )
+
+@app.route('/reports')
+def reports_dashboard():
+    """Show dashboard of all customers with links to their reports."""
+    customers_ref = get_collection_ref('customers')
+    customers = []
+    if customers_ref:
+        for doc in customers_ref.stream():
+            c = doc.to_dict()
+            c['id'] = doc.id
+            customers.append(c)
+    return render_template('reports_dashboard.html', customers=customers)
+
+
+@app.route('/reports/customer/<customer_id>')
+def customer_report(customer_id):
+    """Generate financial report for a single customer."""
+    customer = get_customer_by_id(customer_id)
+    if not customer:
+        flash("Customer not found", "error")
+        return redirect(url_for('reports_dashboard'))
+
+    orders = fetch_all_orders(customer_id=customer_id)
+
+    total_revenue = sum(float(o.get('price', 0)) for o in orders)
+    total_paid = sum(sum(float(p.get('amount', 0)) for p in o.get('payments', [])) for o in orders)
+    total_outstanding = total_revenue - total_paid
+
+    graph_data = {
+        'orders': [o['id'] for o in orders],
+        'revenue': [float(o.get('price', 0)) for o in orders],
+        'paid': [sum(float(p.get('amount', 0)) for p in o.get('payments', [])) for o in orders],
+        'balance': [float(o.get('price', 0)) - sum(float(p.get('amount', 0)) for p in o.get('payments', [])) for o in orders]
+    }
+
+    return render_template('report_customer.html',
+                           customer=customer,
+                           total_revenue=total_revenue,
+                           total_paid=total_paid,
+                           total_outstanding=total_outstanding,
+                           graph_data=graph_data)
+
+
+@app.route('/reports/boutique')
+def boutique_report():
+    """Generate overall boutique financial report."""
+    orders = fetch_all_orders()
+    customers_ref = get_collection_ref('customers')
+
+    total_revenue = sum(float(o.get('price', 0)) for o in orders)
+    total_paid = sum(sum(float(p.get('amount', 0)) for p in o.get('payments', [])) for o in orders)
+    total_outstanding = total_revenue - total_paid
+
+    # Graph data per customer
+    graph_data = {'customers': [], 'revenue': [], 'paid': [], 'balance': []}
+    if customers_ref:
+        for doc in customers_ref.stream():
+            c = doc.to_dict()
+            c_id = doc.id
+            c_orders = fetch_all_orders(customer_id=c_id)
+            c_revenue = sum(float(o.get('price', 0)) for o in c_orders)
+            c_paid = sum(sum(float(p.get('amount', 0)) for p in o.get('payments', [])) for o in c_orders)
+            c_balance = c_revenue - c_paid
+            graph_data['customers'].append(c.get('name', 'Unknown'))
+            graph_data['revenue'].append(c_revenue)
+            graph_data['paid'].append(c_paid)
+            graph_data['balance'].append(c_balance)
+
+    return render_template('report_boutique.html',
+                           total_revenue=total_revenue,
+                           total_paid=total_paid,
+                           total_outstanding=total_outstanding,
+                           graph_data=graph_data)
 
 if __name__ == '__main__':
     # Flask runs only the development server here.
