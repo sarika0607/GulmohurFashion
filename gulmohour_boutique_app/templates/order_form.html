@@ -14,93 +14,125 @@
 
   <h2 class="text-3xl font-serif text-rosepink-700 mb-6 font-semibold">{{ title }} for {{ customer.name }}</h2>
 
-  <form method="POST" class="space-y-6">
-
-    <!-- Customer (hidden, pre-selected) -->
+  <form method="POST" class="space-y-6" id="orderForm">
     <input type="hidden" name="customer_id" value="{{ customer.id }}">
 
+    <!-- Order Info -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Dress Type -->
       <div>
-        <label for="dress_type" class="block text-gray-700 font-medium mb-2">Dress Type *</label>
-        <input type="text" id="dress_type" name="dress_type" 
+        <label class="block text-gray-700 font-medium mb-2">Dress Type *</label>
+        <input type="text" name="dress_type" required
                value="{{ order.dress_type if order else '' }}"
-               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300" required>
+               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
       </div>
-
-      <!-- Occasion -->
       <div>
-        <label for="occasion" class="block text-gray-700 font-medium mb-2">Occasion</label>
-        <input type="text" id="occasion" name="occasion" 
+        <label class="block text-gray-700 font-medium mb-2">Occasion</label>
+        <input type="text" name="occasion"
                value="{{ order.occasion if order else '' }}"
                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
       </div>
-
-      <!-- Fabric -->
       <div>
-        <label for="fabric" class="block text-gray-700 font-medium mb-2">Fabric</label>
-        <input type="text" id="fabric" name="fabric" 
+        <label class="block text-gray-700 font-medium mb-2">Fabric</label>
+        <input type="text" name="fabric"
                value="{{ order.fabric if order else '' }}"
                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
       </div>
-      
-      <!-- Lining -->
       <div>
-        <label for="lining" class="block text-gray-700 font-medium mb-2">Lining</label>
-        <input type="text" id="lining" name="lining" 
+        <label class="block text-gray-700 font-medium mb-2">Lining</label>
+        <input type="text" name="lining"
                value="{{ order.lining if order else '' }}"
                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
       </div>
-
-      <!-- Delivery Date -->
       <div>
-        <label for="delivery_date" class="block text-gray-700 font-medium mb-2">Delivery Date *</label>
-        <input type="date" id="delivery_date" name="delivery_date" 
+        <label class="block text-gray-700 font-medium mb-2">Delivery Date *</label>
+        <input type="date" name="delivery_date" required
                value="{{ order.delivery_date if order else '' }}"
-               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300" required>
+               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
       </div>
-
-      <!-- Price / Cost -->
       <div>
-        <label for="price" class="block text-gray-700 font-medium mb-2">Price (INR)</label>
-        <input type="number" id="price" name="price" 
+        <label class="block text-gray-700 font-medium mb-2">Price (INR)</label>
+        <input type="number" name="price"
                value="{{ order.price if order else '' }}"
                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
       </div>
     </div>
-    
+
     <!-- Notes -->
     <div>
-        <label for="notes" class="block text-gray-700 font-medium mb-2">Design Notes</label>
-        <textarea id="notes" name="notes" rows="3"
-                  class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">{{ order.notes if order else '' }}</textarea>
+      <label class="block text-gray-700 font-medium mb-2">Design Notes</label>
+      <textarea name="notes" rows="3"
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">{{ order.notes if order else '' }}</textarea>
     </div>
 
     <!-- Reference Links -->
     <div id="reference-links-container">
-        <label class="block text-gray-700 font-medium mb-2">Reference Links (Pinterest, Instagram, etc.)</label>
-        {% if order and order.reference_links %}
-            {% for link in order.reference_links %}
-                <div class="flex mb-2">
-                    <input type="url" name="reference_link" placeholder="Reference link" value="{{ link }}"
-                           class="flex-grow px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
-                    <button type="button" onclick="removeReferenceLink(this)" class="bg-gray-300 text-gray-800 px-3 rounded-r-lg hover:bg-gray-400">X</button>
-                </div>
-            {% endfor %}
-        {% else %}
-            <input type="url" name="reference_link" placeholder="Reference link (e.g., https://pinterest.com/design_idea)"
-                   class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300 mb-2">
-        {% endif %}
+      <label class="block text-gray-700 font-medium mb-2">Reference Links</label>
+      {% if order and order.reference_links %}
+        {% for link in order.reference_links %}
+          <div class="flex mb-2">
+            <input type="url" name="reference_link" value="{{ link }}"
+                   class="flex-grow px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
+            <button type="button" onclick="removeReferenceLink(this)" class="bg-gray-300 text-gray-800 px-3 rounded-r-lg hover:bg-gray-400">X</button>
+          </div>
+        {% endfor %}
+      {% else %}
+        <input type="url" name="reference_link" placeholder="https://pinterest.com/design_idea"
+               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300 mb-2">
+      {% endif %}
     </div>
-    <button type="button" id="add-link-btn" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
-        + Add Another Link
+    <button type="button" id="add-link-btn"
+            class="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
+      + Add Another Link
     </button>
-    
+
+    <!-- Measurements Section -->
+    <div class="p-4 border-t border-b border-gray-200 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="flex items-center justify-between lg:col-span-2 mb-2">
+        <h3 class="text-xl font-semibold text-rose-600">Measurements for this Order</h3>
+        <button type="button" id="resetMeasurements"
+                class="px-3 py-1 bg-rosepink-100 text-rosepink-700 rounded-lg hover:bg-rosepink-200 text-sm font-medium">
+          ↺ Reset to Profile Measurements
+        </button>
+      </div>
+
+      {% set m = order.get('measurements', {}) %}
+      {% set top = m.get('top', {}) %}
+      {% set bottom = m.get('bottom', {}) %}
+
+      <div>
+        <h4 class="font-medium text-gray-700 mb-2">Top / Blouse / Kurti</h4>
+        <div class="grid grid-cols-2 gap-4">
+          {% for f in ['shoulder','bust','waist','hip','armhole','sleeve_length','top_length','neck','front_neck','back_neck'] %}
+            <div>
+              <label class="block text-sm text-gray-600">{{ f.replace('_',' ').title() }}</label>
+              <input type="text" name="{{ f }}" value="{{ top.get(f, '') }}" 
+                     autocomplete="off"
+                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-rose-500 focus:border-rose-500 sm:text-sm">
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-medium text-gray-700 mb-2">Bottom / Salwar / Trouser</h4>
+        <div class="grid grid-cols-2 gap-4">
+          {% for f in ['waist_b','hip_b','thigh','knee','calf','ankle','bottom_length'] %}
+            <div>
+              <label class="block text-sm text-gray-600">{{ f.replace('_',' ').title() }}</label>
+              <input type="text" name="{{ f }}" value="{{ bottom.get(f, '') }}" 
+                     autocomplete="off"
+                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-rose-500 focus:border-rose-500 sm:text-sm">
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
 
     <!-- Status -->
     <div class="pt-4 border-t">
-      <label for="status" class="block text-gray-700 font-medium mb-2">Status</label>
-      <select id="status" name="status" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
+      <label class="block text-gray-700 font-medium mb-2">Status</label>
+      <select name="status"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
         <option value="Pending" {% if (order and order.status == 'Pending') or not order %}selected{% endif %}>Pending</option>
         <option value="In Progress" {% if order and order.status == 'In Progress' %}selected{% endif %}>In Progress</option>
         <option value="Delivered" {% if order and order.status == 'Delivered' %}selected{% endif %}>Delivered</option>
@@ -113,42 +145,49 @@
          class="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-medium">
         Cancel
       </a>
-      <button type="submit" class="px-6 py-3 bg-rosepink-600 text-white rounded-lg hover:bg-rosepink-700 transition font-medium shadow-md">
+      <button type="submit"
+              class="px-6 py-3 bg-rosepink-600 text-white rounded-lg hover:bg-rosepink-700 transition font-medium shadow-md">
         {% if order %}Save Changes{% else %}Create Order{% endif %}
       </button>
     </div>
-
   </form>
 </div>
 
-<!-- JS to add/remove reference links dynamically -->
 <script>
-  function addReferenceLink() {
-    const container = document.getElementById('reference-links-container');
-    const wrapper = document.createElement('div');
-    wrapper.className = 'flex mb-2';
-    
-    const input = document.createElement('input');
-    input.type = 'url';
-    input.name = 'reference_link';
-    input.placeholder = 'Reference link';
-    input.className = 'flex-grow px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300';
+// Add/Remove Reference Links
+function addReferenceLink() {
+  const c = document.getElementById('reference-links-container');
+  const w = document.createElement('div');
+  w.className = 'flex mb-2';
+  const i = document.createElement('input');
+  i.type = 'url';
+  i.name = 'reference_link';
+  i.placeholder = 'Reference link';
+  i.className = 'flex-grow px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300';
+  const b = document.createElement('button');
+  b.type = 'button'; b.textContent = 'X';
+  b.className = 'bg-gray-300 text-gray-800 px-3 rounded-r-lg hover:bg-gray-400';
+  b.onclick = () => w.remove();
+  w.append(i, b); c.appendChild(w);
+}
+document.getElementById('add-link-btn').addEventListener('click', addReferenceLink);
 
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = 'X';
-    button.onclick = function() { removeReferenceLink(this); };
-    button.className = 'bg-gray-300 text-gray-800 px-3 rounded-r-lg hover:bg-gray-400';
+// Reset to Profile Measurements
+document.getElementById('resetMeasurements').addEventListener('click', () => {
+  const customerMeasurements = {{ customer.measurements | tojson | safe }};
+  if (!customerMeasurements) return alert('No saved measurements in profile.');
 
-    wrapper.appendChild(input);
-    wrapper.appendChild(button);
-    container.appendChild(wrapper);
+  const top = customerMeasurements.top || {};
+  const bottom = customerMeasurements.bottom || {};
+
+  for (const [k, v] of Object.entries(top)) {
+    const input = document.querySelector(`input[name="${k}"]`);
+    if (input) input.value = v;
   }
-
-  function removeReferenceLink(button) {
-    button.parentNode.remove();
+  for (const [k, v] of Object.entries(bottom)) {
+    const input = document.querySelector(`input[name="${k}"]`);
+    if (input) input.value = v;
   }
-  
-  document.getElementById('add-link-btn').addEventListener('click', addReferenceLink);
+});
 </script>
 {% endblock %}

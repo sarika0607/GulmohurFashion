@@ -112,6 +112,20 @@ def get_order_by_id(order_id):
         return order_data
     return None
 
+
+@app.route('/view_order/<order_id>')
+def view_order(order_id):
+    """Display all order details including saved measurements."""
+    order_ref = db.collection('orders').document(order_id)
+    doc = order_ref.get()
+    if not doc.exists:
+        flash("Order not found", "error")
+        return redirect(url_for('all_orders'))
+
+    order = doc.to_dict()
+    order['id'] = doc.id
+    return render_template('view_order.html', order=order)
+
 def fetch_all_orders(customer_id=None):
     """Fetches all orders, optionally filtered by customer_id."""
     orders_ref = get_collection_ref('orders')
@@ -160,46 +174,104 @@ def get_tasks_for_today():
     ]
     return tasks
 
-def parse_measurements(form):
-    """Helper to extract and structure top and bottom measurements from the form data."""
-    top_fields = ['shoulder','bust','waist','hip','armhole','sleeve_length','top_length','neck','front_neck','back_neck']
-    bottom_fields = ['waist_b','hip_b','thigh','knee','calf','ankle','bottom_length']
+from flask import request, flash, redirect, url_for, render_template
+from datetime import datetime, timedelta
+import json
 
-    measurements = {
-        'top': {field: form.get(field, '').strip() for field in top_fields},
-        'bottom': {field: form.get(field, '').strip() for field in bottom_fields}
-    }
+# Assume `db` is your Firestore client and helper functions exist:
+# get_customer_by_id(customer_id)
+# parse_measurements(form)
 
-    return measurements
+# -----------------------------
+# PROCESS ORDER FORM
+# -----------------------------
 
-def process_order_form(form, customer_id, customer_name):
-    """Structures order data from form submissions, including measurements."""
-    
-    # Process reference links (handles 'reference_link' for single or 'reference_links' for multiple)
-    reference_links = [
-        link.strip() 
-        for key, link in form.items() 
-        if key.startswith('reference_link') and link.strip()
-    ]
-    
-    # Extract order-specific measurements
+def clean_for_firestore(obj):
+    """Recursively clean data for Firestore compatibility."""
+    if isinstance(obj, dict):
+        return {k: clean_for_firestore(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        clean_list = []
+        for v in obj:
+            if isinstance(v, (str, int, float, bool)) or v is None:
+                clean_list.append(v)
+            elif isinstance(v, dict):
+                clean_list.append(json.dumps(v, default=str))
+            else:
+                clean_list.append(str(v))
+        return clean_list
+    elif isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+    else:
+        return str(obj)
+# -----------------------------
+# PROCESS ORDER FORM
+# -----------------------------
+def process_order_form(order_id=None, customer_id=None, customer_name=''):
+    """Create or update an order. Returns the full order dict including 'id'."""
+    form = dict(request.form)
     measurements = parse_measurements(form)
 
-    return {
-        'customer_id': customer_id,
+    # Fetch customer name to include in order
+    customer = get_customer_by_id(customer_id) if customer_id else None
+    customer_name = customer.get('name') if customer else form.get('customer_name', '')
+
+    data = {
+        'customer_id': customer_id or form.get('customer_id'),
         'customer_name': customer_name,
-        'dress_type': form.get('dress_type', '').strip(),
-        'occasion': form.get('occasion', '').strip(),
-        'fabric': form.get('fabric', '').strip(),
-        'details': form.get('details', '').strip(), # Using 'details' as requested
-        'price': form.get('price', '').strip(),      # Including 'price'
-        'delivery_date': form.get('delivery_date', '').strip(),
-        'status': form.get('status', 'Pending').strip(),
-        'is_deleted': False,
-        'reference_links': reference_links,
-        'measurements': measurements # CRITICAL: Include the extracted measurements
+        'dress_type': form.get('dress_type'),
+        'occasion': form.get('occasion'),
+        'fabric': form.get('fabric'),
+        'lining': form.get('lining'),
+        'delivery_date': form.get('delivery_date'),
+        'price': float(form.get('price') or 0),
+        'notes': form.get('notes'),
+        'status': form.get('status', 'Pending'),
+        'reference_links': [l for l in request.form.getlist('reference_link') if l.strip()],
+        'measurements': measurements,
+        'updated_at': firestore.SERVER_TIMESTAMP,
     }
+
+    data = clean_for_firestore(data)
+    orders_ref = db.collection('orders')
+
+    if not order_id:
+        # Create new order
+        doc_ref = orders_ref.document()
+        data['created_at'] = firestore.SERVER_TIMESTAMP
+        data['is_deleted'] = False
+        doc_ref.set(data)
+        order = data.copy()
+        order['id'] = doc_ref.id
+        flash(f"Order created successfully! ID: {doc_ref.id}", "success")
+        return order
+    else:
+        # Update existing order
+        order_doc_ref = orders_ref.document(order_id)
+        order_doc = order_doc_ref.get()
+        if not order_doc.exists:
+            flash(f"No order found with ID {order_id}", "error")
+            return None
+        order_doc_ref.update(data)
+        order = data.copy()
+        order['id'] = order_id
+        flash("Order updated successfully", "success")
+        return order
+
+
+def parse_measurements(form):
+
     
+    """Extract measurement fields for top and bottom from submitted form."""
+    top_fields = ['shoulder','bust','waist','hip','armhole','sleeve_length','top_length','neck','front_neck','back_neck']
+    bottom_fields = ['waist_b','hip_b','thigh','knee','calf','ankle','bottom_length']
+    top = {f: form.get(f, '').strip() for f in top_fields}
+    bottom = {f: form.get(f, '').strip() for f in bottom_fields}
+    return {'top': top, 'bottom': bottom}
+
+
+
+
 # --- Routes ---
 
 @app.route('/')
@@ -244,8 +316,29 @@ def dashboard():
         total_customers=total_customers
     )
 
-
 # --- Customer Management ---
+@app.route('/new_order/<customer_id>', methods=['GET', 'POST'])
+def new_order_for_customer(customer_id):
+    """Create a new order for a specific customer with measurements copied from profile."""
+    customer_ref = db.collection('customers').document(customer_id)
+    customer_doc = customer_ref.get()
+    if not customer_doc.exists:
+        flash("Customer not found", "error")
+        return redirect(url_for('customers'))
+
+    customer = customer_doc.to_dict()
+    customer['id'] = customer_doc.id
+
+    if request.method == 'POST':
+        return process_order_form(customer_id=customer_id)
+
+    measurements = customer.get('measurements', {})
+    order_data = {
+        'customer_id': customer_id,
+        'customer_name': customer.get('name'),
+        'measurements': measurements
+    }
+    return render_template('order_form.html', title="New Order", customer=customer, order=order_data)
 
 @app.route('/customers')
 def customers():
@@ -305,7 +398,7 @@ def add_customer():
                 'state': form.get('state', '').strip(),
                 'pin': form.get('pin', '').strip(),
             },
-            'measurements': parse_measurements(form),
+            'measurements': parse_measurements(dict(form)),
             'created_at': firestore.SERVER_TIMESTAMP,
             'updated_at': firestore.SERVER_TIMESTAMP,
         }
@@ -398,55 +491,41 @@ def all_orders():
     # so we can render them directly.
     return render_template('all_orders.html', orders=orders)
 
+# -----------------------------
+# NEW ORDER ROUTE
+# -----------------------------
+# ----------------------------------------------------------
+# Route: new order
+# ----------------------------------------------------------
 @app.route('/order/new/<customer_id>', methods=['GET', 'POST'])
 def new_order(customer_id):
-    """Add a new order for a specific customer."""
     customer = get_customer_by_id(customer_id)
-    orders_ref = get_collection_ref('orders')
-    
-    if not customer or not orders_ref:
-        flash("Customer or Database not ready.", 'error')
+    if not customer:
+        flash("Customer not found.", "error")
         return redirect(url_for('customers'))
-        
+
     if request.method == 'POST':
-        form = request.form
-        order_data = process_order_form(form, customer_id, customer['name'])
-        
-        # NOTE: Removed the block that incorrectly overwrote submitted measurements 
-        # with customer profile measurements. process_order_form now correctly 
-        # captures the submitted measurements from the form.
-        
-        order_data['created_at'] = firestore.SERVER_TIMESTAMP
-        
-        try:
-            _, doc_ref = orders_ref.add(order_data)
-            flash(f"New order for {customer['name']} added successfully!", 'success')
+        order_id = process_order_form(order_id=None, customer_id=customer_id)
+        if order_id:  # Only redirect if order creation succeeded
             return redirect(url_for('view_customer', customer_id=customer_id))
-        except Exception as e:
-            flash(f"Error adding order: {e}", 'error')
-            # Pass form data back to template on error
-            order_data['id'] = 'new'
-            # Pass title back on error
-            return render_template('order_form.html', customer=customer, order=order_data, title="Add New Order")
+        else:
+            return redirect(url_for('new_order', customer_id=customer_id))
 
-    # GET request - FIX implemented here
-    # Set default date to today or soon
     default_date = (datetime.now() + timedelta(weeks=2)).strftime('%Y-%m-%d')
-    
-    # 1. Retrieve customer's measurements to pre-populate the form (THE FIX)
-    customer_measurements = customer.get('measurements', {'top': {}, 'bottom': {}})
-    
-    # 2. Create the default order object
     default_order = {
-        'delivery_date': default_date, 
-        'status': 'Pending', 
-        'reference_links': [], 
-        'measurements': customer_measurements # Inject the customer's measurements here
-    } 
-    
-    # Pass title to the template
-    return render_template('order_form.html', customer=customer, order=default_order, title="Add New Order")
+        'delivery_date': default_date,
+        'status': 'Pending',
+        'reference_links': [],
+        'measurements': customer.get('measurements', {'top': {}, 'bottom': {}}),
+        'customer_name': customer.get('name', '')
+    }
 
+    return render_template(
+        'order_form.html',
+        customer=customer,
+        order=default_order,
+        title="Add New Order"
+    )
 
 @app.route('/order/edit/<order_id>', methods=['GET', 'POST'])
 def edit_order(order_id):
@@ -459,15 +538,15 @@ def edit_order(order_id):
         return redirect(url_for('dashboard'))
 
     customer = get_customer_by_id(order['customer_id'])
-    
+    customer_name = customer['name'] if customer else ''
+
     if request.method == 'POST':
-        form = request.form
-        updated_data = process_order_form(form, order['customer_id'], order['customer_name'])
+        updated_data = process_order_form(order_id=order_id, customer_id=order['customer_id'], customer_name=customer_name)
         updated_data['updated_at'] = firestore.SERVER_TIMESTAMP
         
         try:
             orders_ref.document(order_id).update(updated_data)
-            flash(f"Order for {customer['name']} updated successfully!", 'success')
+            flash(f"Order for {customer_name} updated successfully!", 'success')
             return redirect(url_for('view_customer', customer_id=order['customer_id']))
         except Exception as e:
             flash(f"Error updating order: {e}", 'error')
@@ -480,9 +559,7 @@ def edit_order(order_id):
         except ValueError:
             order['delivery_date'] = (datetime.now() + timedelta(weeks=2)).strftime('%Y-%m-%d')
 
-    # Pass the title to the template
     return render_template('order_form.html', customer=customer, order=order, title="Edit Order")
-
 
 @app.route('/order/delete/<order_id>', methods=['POST'])
 def delete_order(order_id):
