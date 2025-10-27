@@ -79,6 +79,20 @@ def initialize_auth():
 # if db:
 #     initialize_auth()
 
+# -----------------------------
+# Helper: Safe payments parsing
+# -----------------------------
+def parse_payments(payments):
+    """Ensure payments is always a list of dicts, even if stored as a JSON string."""
+    if isinstance(payments, str):
+        try:
+            payments = json.loads(payments)
+        except:
+            payments = []
+    if not isinstance(payments, list):
+        payments = []
+    # Keep only dicts
+    return [p for p in payments if isinstance(p, dict)]
 
 # --- Firestore Helper Functions ---
 
@@ -468,6 +482,7 @@ def edit_customer(customer_id):
 
 
 @app.route('/customer/<customer_id>')
+@app.route('/customer/<customer_id>')
 def view_customer(customer_id):
     """View customer profile, including measurements, linked orders, and financials."""
     customer = get_customer_by_id(customer_id)
@@ -482,8 +497,8 @@ def view_customer(customer_id):
     total_outstanding = 0
     for o in orders:
         price = float(o.get('price', 0))
-        payments = o.get('payments', [])
-        paid_amount = sum([float(p.get('amount', 0)) for p in payments])
+        payments = parse_payments(o.get('payments', []))   # <-- PATCHED
+        paid_amount = sum(float(p.get('amount', 0)) for p in payments)
         balance_due = max(price - paid_amount, 0)
         o['paid_amount'] = paid_amount
         o['balance_due'] = balance_due
@@ -660,6 +675,7 @@ def reports_dashboard():
 
 
 @app.route('/reports/customer/<customer_id>')
+@app.route('/reports/customer/<customer_id>')
 def customer_report(customer_id):
     """Generate financial report for a single customer."""
     customer = get_customer_by_id(customer_id)
@@ -670,14 +686,14 @@ def customer_report(customer_id):
     orders = fetch_all_orders(customer_id=customer_id)
 
     total_revenue = sum(float(o.get('price', 0)) for o in orders)
-    total_paid = sum(sum(float(p.get('amount', 0)) for p in o.get('payments', [])) for o in orders)
+    total_paid = sum(sum(float(p.get('amount', 0)) for p in parse_payments(o.get('payments', []))) for o in orders)  # <-- PATCHED
     total_outstanding = total_revenue - total_paid
 
     graph_data = {
         'orders': [o['id'] for o in orders],
         'revenue': [float(o.get('price', 0)) for o in orders],
-        'paid': [sum(float(p.get('amount', 0)) for p in o.get('payments', [])) for o in orders],
-        'balance': [float(o.get('price', 0)) - sum(float(p.get('amount', 0)) for p in o.get('payments', [])) for o in orders]
+        'paid': [sum(float(p.get('amount', 0)) for p in parse_payments(o.get('payments', []))) for o in orders],  # <-- PATCHED
+        'balance': [float(o.get('price', 0)) - sum(float(p.get('amount', 0)) for p in parse_payments(o.get('payments', []))) for o in orders]  # <-- PATCHED
     }
 
     return render_template('report_customer.html',
@@ -687,7 +703,7 @@ def customer_report(customer_id):
                            total_outstanding=total_outstanding,
                            graph_data=graph_data)
 
-
+@app.route('/reports/boutique')
 @app.route('/reports/boutique')
 def boutique_report():
     """Generate overall boutique financial report."""
@@ -695,7 +711,7 @@ def boutique_report():
     customers_ref = get_collection_ref('customers')
 
     total_revenue = sum(float(o.get('price', 0)) for o in orders)
-    total_paid = sum(sum(float(p.get('amount', 0)) for p in o.get('payments', [])) for o in orders)
+    total_paid = sum(sum(float(p.get('amount', 0)) for p in parse_payments(o.get('payments', []))) for o in orders)  # <-- PATCHED
     total_outstanding = total_revenue - total_paid
 
     # Graph data per customer
@@ -706,7 +722,7 @@ def boutique_report():
             c_id = doc.id
             c_orders = fetch_all_orders(customer_id=c_id)
             c_revenue = sum(float(o.get('price', 0)) for o in c_orders)
-            c_paid = sum(sum(float(p.get('amount', 0)) for p in o.get('payments', [])) for o in c_orders)
+            c_paid = sum(sum(float(p.get('amount', 0)) for p in parse_payments(o.get('payments', []))) for o in c_orders)  # <-- PATCHED
             c_balance = c_revenue - c_paid
             graph_data['customers'].append(c.get('name', 'Unknown'))
             graph_data['revenue'].append(c_revenue)
