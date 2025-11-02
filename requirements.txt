@@ -11,7 +11,7 @@ reportlab==4.0.7
 qrcode
 gunicorn==21.2.0
 Pillow
-
+google-cloud-firestore
 
 #pip install grpcio --use-pep517 --no-build-isolation
 #pip install firebase-admin --no-deps
