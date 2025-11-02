@@ -42,7 +42,10 @@ WHATSAPP_CONFIG = {
 
 # 1. Initialize Firebase App
 try:
-    cred = credentials.Certificate("firebase-key.json")
+    load_dotenv()
+
+    cred = credentials.Certificate(os.getenv("FIREBASE_KEY_PATH"))
+
     firebase_admin.initialize_app(cred, {
     'storageBucket': 'gulmohour-boutique.firebasestorage.app'
 })

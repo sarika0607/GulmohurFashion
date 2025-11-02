@@ -1,0 +1,72 @@
+1. Install Required Software (If not already installed)
+Tool	Download
+Python (3.10+)	https://www.python.org/downloads/windows/
+
+Git for Windows	https://git-scm.com/download/win
+
+While installing Python → Check the box ✅ "Add Python to PATH".
+
+2. Clone Your GitHub Repository
+
+Open Command Prompt (cmd) or PowerShell:
+
+git clone https://github.com/sarika0607/GulmohurFashion.git
+cd GulmohurFashion
+
+python -m venv venv
+
+venv\Scripts\activate
+
+pip install -r requirements.txt
+
+5. Place Firebase Key Safely (Very Important)
+
+DO NOT put the .json key inside your project.
+
+Instead create a folder outside the project, safe on your system:
+
+mkdir C:\keys
+
+
+Move your Firebase key file into it:
+
+C:\keys\gulmohur-service-account.json
+
+6. Create .env File in Project App Folder
+
+Navigate to your app folder (the folder containing app.py):
+
+cd gulmohour_boutique_app
+
+
+Create .env:
+
+echo FIREBASE_KEY_PATH=C:\keys\gulmohur-service-account.json > .env
+
+
+Your .env file should now look like:
+
+FIREBASE_KEY_PATH=C:\keys\gulmohur-service-account.json
+
+8. Ensure .env and Keys are Ignored (Not Sent to GitHub)
+
+In your top-level .gitignore, these must be present:
+
+.env
+venv/
+*.json
+
+
+If .json is not there → Add it.
+
+💡 Quick Summary (Windows Version)
+Step	Command
+Clone	                    git clone <repo> && cd repo
+Create venv	                python -m venv venv
+Activate venv	            venv\Scripts\activate
+Install deps	            pip install -r requirements.txt
+Store Firebase key securely	C:\keys\filename.json
+Create .env	                FIREBASE_KEY_PATH=C:\keys\filename.json
+Run app	                    python app.py or flask run
+
+
