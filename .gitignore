@@ -1,7 +1,7 @@
 /.DS_Store
 /gulmohour_boutique_app 2.zip
 /gulmohour_boutique_app.zip
-/venv
+/gulmohour_boutique/venv
 /.vscode
 __pycache__/
 *.pyc
