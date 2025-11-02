@@ -1,7 +1,7 @@
 # python3 -m pip install --upgrade pip setuptools wheel
 # pip3 install grpcio --no-cache-dir
 
-grpcio==1.62.2
+grpcio==1.51.3
 openai
 qrcode
 Flask==3.0.0
