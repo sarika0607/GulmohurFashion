@@ -1749,7 +1749,5 @@ def orders_by_period():
         flash(f"Error fetching orders: {e}", 'error')
         return render_template('orders_by_period.html', orders=[], from_date=from_date, to_date=to_date)
 
-if __name__ == '__main__':
-    initialize_auth()
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)  # debug=False for production
+if __name__ == "__main__":
+    app.run()
