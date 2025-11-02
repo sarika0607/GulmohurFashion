@@ -2,3 +2,9 @@
 /gulmohour_boutique_app 2.zip
 /gulmohour_boutique_app.zip
 /venv
+/.vscode
+__pycache__/
+*.pyc
+instance/
+.env
+.env.*
