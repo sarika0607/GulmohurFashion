@@ -9,4 +9,15 @@ instance/
 .env
 .env.*
 firebase-key.json
-venv
+venvgulmohour_boutique_app/firebase-key.json
+firebase-*.json
+*.env
+venv/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.log
+firebase-key.json
+.env
