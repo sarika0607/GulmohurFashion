@@ -1,7 +1,7 @@
 # python3 -m pip install --upgrade pip setuptools wheel
 # pip3 install grpcio --no-cache-dir
 
-grpcio==1.62.2
+grpcio==1.51.3
 openai
 qrcode
 Flask==3.0.0
@@ -11,6 +11,7 @@ reportlab==4.0.7
 qrcode[pil]==7.4.2
 gunicorn==21.2.0
 Pillow==10.1.0
+google-cloud-firestore
 
 
 #pip install grpcio --use-pep517 --no-build-isolation
