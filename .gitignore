@@ -9,3 +9,4 @@ instance/
 .env
 .env.*
 firebase-key.json
+venv
