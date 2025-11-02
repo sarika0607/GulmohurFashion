@@ -1,193 +1,664 @@
 {% extends "base.html" %}
 
 {% block title %}{{ title }} - {{ customer.name }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}For {{ customer.name }}{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto p-6 bg-white shadow-xl rounded-2xl mt-4">
-
+<div class="max-w-6xl mx-auto">
   <!-- Breadcrumb -->
-  <nav class="text-gray-500 text-sm mb-6">
-    <a href="{{ url_for('dashboard') }}" class="hover:text-rosepink-600">Dashboard</a> &raquo;
-    <a href="{{ url_for('view_customer', customer_id=customer.id) }}" class="hover:text-rosepink-600">{{ customer.name }}</a> &raquo;
-    {{ title }}
+  <nav class="text-sm mb-6">
+    <ol class="flex items-center space-x-2 text-gray-500">
+      <li><a href="{{ url_for('dashboard') }}" class="hover:text-primary-600">Dashboard</a></li>
+      <li><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></li>
+      <li><a href="{{ url_for('view_customer', customer_id=customer.id) }}" class="hover:text-primary-600">{{ customer.name }}</a></li>
+      <li><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></li>
+      <li class="text-gray-900 font-medium">{{ title }}</li>
+    </ol>
   </nav>
 
-  <h2 class="text-3xl font-serif text-rosepink-700 mb-6 font-semibold">{{ title }} for {{ customer.name }}</h2>
+  <div class="glass-effect rounded-2xl p-6 lg:p-8 shadow-lg">
+    <form method="POST" class="space-y-8" id="orderForm" enctype="multipart/form-data">
+      <input type="hidden" name="customer_id" value="{{ customer.id }}">
 
-  <form method="POST" class="space-y-6" id="orderForm">
-    <input type="hidden" name="customer_id" value="{{ customer.id }}">
-
-    <!-- Order Info -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Order Details Section -->
       <div>
-        <label class="block text-gray-700 font-medium mb-2">Dress Type *</label>
-        <input type="text" name="dress_type" required
-               value="{{ order.dress_type if order else '' }}"
-               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-2">Occasion</label>
-        <input type="text" name="occasion"
-               value="{{ order.occasion if order else '' }}"
-               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-2">Fabric</label>
-        <input type="text" name="fabric"
-               value="{{ order.fabric if order else '' }}"
-               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-2">Lining</label>
-        <input type="text" name="lining"
-               value="{{ order.lining if order else '' }}"
-               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-2">Delivery Date *</label>
-        <input type="date" name="delivery_date" required
-               value="{{ order.delivery_date if order else '' }}"
-               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-2">Price (INR)</label>
-        <input type="number" name="price"
-               value="{{ order.price if order else '' }}"
-               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
-      </div>
-    </div>
-
-    <!-- Notes -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-2">Design Notes</label>
-      <textarea name="notes" rows="3"
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">{{ order.notes if order else '' }}</textarea>
-    </div>
-
-    <!-- Reference Links -->
-    <div id="reference-links-container">
-      <label class="block text-gray-700 font-medium mb-2">Reference Links</label>
-      {% if order and order.reference_links %}
-        {% for link in order.reference_links %}
-          <div class="flex mb-2">
-            <input type="url" name="reference_link" value="{{ link }}"
-                   class="flex-grow px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
-            <button type="button" onclick="removeReferenceLink(this)" class="bg-gray-300 text-gray-800 px-3 rounded-r-lg hover:bg-gray-400">X</button>
+        <div class="flex items-center space-x-3 mb-6">
+          <div class="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
           </div>
-        {% endfor %}
-      {% else %}
-        <input type="url" name="reference_link" placeholder="https://pinterest.com/design_idea"
-               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300 mb-2">
-      {% endif %}
-    </div>
-    <button type="button" id="add-link-btn"
-            class="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
-      + Add Another Link
-    </button>
+          <h3 class="text-xl font-display font-bold text-gray-900">Order Information</h3>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Dress Type *</label>
+            <input type="text" name="dress_type" id="dress_type" required
+                   value="{{ order.dress_type if order else '' }}" placeholder="e.g., Lehenga Choli"
+                   class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                   onblur="getAISuggestions()">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Occasion</label>
+            <input type="text" name="occasion" id="occasion"
+                   value="{{ order.occasion if order else '' }}" placeholder="e.g., Wedding"
+                   class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                   onblur="getAISuggestions()">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Fabric</label>
+            <input type="text" name="fabric" id="fabric"
+                   value="{{ order.fabric if order else '' }}" placeholder="e.g., Silk, Cotton"
+                   class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Lining</label>
+            <input type="text" name="lining"
+                   value="{{ order.lining if order else '' }}" placeholder="e.g., Satin"
+                   class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Delivery Date *</label>
+            <input type="date" name="delivery_date" required
+                   value="{{ order.delivery_date if order else '' }}"
+                   class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+          </div>
+        </div>
 
-    <!-- Measurements Section -->
-    <div class="p-4 border-t border-b border-gray-200 grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="flex items-center justify-between lg:col-span-2 mb-2">
-        <h3 class="text-xl font-semibold text-rose-600">Measurements for this Order</h3>
-        <button type="button" id="resetMeasurements"
-                class="px-3 py-1 bg-rosepink-100 text-rosepink-700 rounded-lg hover:bg-rosepink-200 text-sm font-medium">
-          ↺ Reset to Profile Measurements
-        </button>
-      </div>
-
-      {% set m = order.get('measurements', {}) %}
-      {% set top = m.get('top', {}) %}
-      {% set bottom = m.get('bottom', {}) %}
-
-      <div>
-        <h4 class="font-medium text-gray-700 mb-2">Top / Blouse / Kurti</h4>
-        <div class="grid grid-cols-2 gap-4">
-          {% for f in ['shoulder','bust','waist','hip','armhole','sleeve_length','top_length','neck','front_neck','back_neck'] %}
-            <div>
-              <label class="block text-sm text-gray-600">{{ f.replace('_',' ').title() }}</label>
-              <input type="text" name="{{ f }}" value="{{ top.get(f, '') }}" 
-                     autocomplete="off"
-                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-rose-500 focus:border-rose-500 sm:text-sm">
+        <!-- AI Design Suggestions -->
+        <div id="ai-suggestions" class="mt-6 hidden">
+          <div class="p-6 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
+            <div class="flex items-start space-x-3 mb-4">
+              <div class="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+              </div>
+              <div class="flex-1">
+                <h4 class="text-lg font-semibold text-gray-900 mb-2">AI Design Suggestions</h4>
+                <div id="suggestions-content" class="text-sm text-gray-700 space-y-2">
+                  <div class="flex items-center space-x-2">
+                    <div class="animate-spin h-5 w-5 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+                    <span>Getting design suggestions...</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          {% endfor %}
+          </div>
+        </div>
+
+        <!-- Cost Breakdown Section -->
+        <div class="mt-6 p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
+          <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Payment Details</span>
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Material Cost (₹)</label>
+              <input type="number" name="material_cost" id="material_cost" min="0" step="0.01"
+                     value="{{ order.material_cost if order else '0' }}" placeholder="0"
+                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                     onchange="calculatePayments()">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Stitching Charges (₹)</label>
+              <input type="number" name="stitching_cost" id="stitching_cost" min="0" step="0.01"
+                     value="{{ order.stitching_cost if order else '0' }}" placeholder="0"
+                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                     onchange="calculatePayments()">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Total (₹) *</label>
+              <input type="number" name="price" id="total_price" min="0" step="0.01"
+                     value="{{ order.price if order else '0' }}" placeholder="0"
+                     class="w-full px-4 py-3 border-2 border-green-300 rounded-xl bg-green-100 font-bold text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                     readonly>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Advance Received (₹)</label>
+              <input type="number" name="advance_received" id="advance_received" min="0" step="0.01"
+                     value="{{ order.advance_received if order else '0' }}" placeholder="0"
+                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                     onchange="calculatePayments()">
+            </div>
+          </div>
+          <div class="mt-4 p-4 bg-white rounded-lg border-2 border-amber-200">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-gray-700">Balance Amount:</span>
+              <span id="balance_display" class="text-2xl font-bold text-amber-700">₹0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Upload Section -->
+        <div class="mt-6 p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+          <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span>Reference Images</span>
+          </h4>
+          
+          {% if order and order.images %}
+          <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Current Images:</label>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {% for image_url in order.images %}
+              <div class="relative group" id="image-{{ loop.index0 }}">
+                <img src="{{ image_url }}" alt="Design Reference" class="w-full h-32 object-cover rounded-lg border-2 border-blue-200">
+                <button type="button" onclick="deleteImage('{{ order.id }}', '{{ image_url }}', {{ loop.index0 }})" 
+                        class="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Upload New Images:</label>
+            <div class="flex items-center justify-center w-full">
+              <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-blue-300 border-dashed rounded-xl cursor-pointer bg-blue-50 hover:bg-blue-100 transition">
+                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                  <svg class="w-10 h-10 mb-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                  </svg>
+                  <p class="mb-2 text-sm text-gray-700"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                  <p class="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 5MB each)</p>
+                </div>
+                <input type="file" name="order_images" id="order_images" multiple accept="image/*" class="hidden" onchange="previewImages(event)">
+              </label>
+            </div>
+          </div>
+          
+          <div id="image-preview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 hidden"></div>
+        </div>
+
+        <!-- Notes -->
+        <div class="mt-6">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Design Notes / Comments / Special Instructions</label>
+          <textarea name="notes" rows="3" placeholder="Special instructions, design details, embroidery requirements..."
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">{{ order.notes if order else '' }}</textarea>
+        </div>
+
+        <!-- Reference Links -->
+        <div class="mt-6">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Reference Links</label>
+          <div id="reference-links-container" class="space-y-3">
+            {% if order and order.reference_links %}
+              {% for link in order.reference_links %}
+                <div class="flex gap-2">
+                  <input type="url" name="reference_link" value="{{ link }}" placeholder="https://pinterest.com/design_idea"
+                         class="flex-grow px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+                  <button type="button" onclick="this.parentElement.remove()" 
+                          class="px-4 py-3 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              {% endfor %}
+            {% else %}
+              <input type="url" name="reference_link" placeholder="https://pinterest.com/design_idea"
+                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+            {% endif %}
+          </div>
+          <button type="button" id="add-link-btn"
+                  class="mt-3 inline-flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            <span>Add Another Link</span>
+          </button>
         </div>
       </div>
 
-      <div>
-        <h4 class="font-medium text-gray-700 mb-2">Bottom / Salwar / Trouser</h4>
-        <div class="grid grid-cols-2 gap-4">
-          {% for f in ['waist_b','hip_b','thigh','knee','calf','ankle','bottom_length'] %}
-            <div>
-              <label class="block text-sm text-gray-600">{{ f.replace('_',' ').title() }}</label>
-              <input type="text" name="{{ f }}" value="{{ bottom.get(f, '') }}" 
-                     autocomplete="off"
-                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-rose-500 focus:border-rose-500 sm:text-sm">
+      <!-- Measurements Section - Receipt Format -->
+      <div class="pt-6 border-t border-gray-200">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div class="flex items-center space-x-3">
+            <div class="p-2 bg-gradient-to-br from-accent-400 to-accent-500 rounded-lg">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+              </svg>
             </div>
-          {% endfor %}
+            <h3 class="text-xl font-display font-bold text-gray-900">Measurements (inches)</h3>
+          </div>
+          <button type="button" id="resetMeasurements"
+                  class="inline-flex items-center space-x-2 px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span>Reset to Profile</span>
+          </button>
+        </div>
+
+        {% set m = order.get('measurements', {}) if order else {} %}
+
+        <div class="bg-gradient-to-br from-primary-50 to-pink-50 p-6 rounded-xl border border-primary-100">
+          <h4 class="font-semibold text-gray-800 mb-4 text-lg">Main Garment Measurements</h4>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Length</label>
+              <input type="text" name="length" value="{{ m.get('length', '') }}" placeholder="e.g., 38"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Shoulder</label>
+              <input type="text" name="shoulder" value="{{ m.get('shoulder', '') }}" placeholder="e.g., 14"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Armhole</label>
+              <input type="text" name="armhole" value="{{ m.get('armhole', '') }}" placeholder="e.g., 16"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Upper Chest</label>
+              <input type="text" name="upper_chest" value="{{ m.get('upper_chest', '') }}" placeholder="e.g., 36"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Chest</label>
+              <input type="text" name="chest" value="{{ m.get('chest', '') }}" placeholder="e.g., 38"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Waist</label>
+              <input type="text" name="waist" value="{{ m.get('waist', '') }}" placeholder="e.g., 32"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Stomach</label>
+              <input type="text" name="stomach" value="{{ m.get('stomach', '') }}" placeholder="e.g., 34"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Hips</label>
+              <input type="text" name="hips" value="{{ m.get('hips', '') }}" placeholder="e.g., 40"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Front/Back Cross</label>
+              <input type="text" name="front_back_cross" value="{{ m.get('front_back_cross', '') }}" placeholder="e.g., 14"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Sleeve Length</label>
+              <input type="text" name="sleeve_length" value="{{ m.get('sleeve_length', '') }}" placeholder="e.g., 18"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Neck (Front & Back)</label>
+              <input type="text" name="neck_front_back" value="{{ m.get('neck_front_back', '') }}" placeholder="e.g., 8/6"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Dart Point</label>
+              <input type="text" name="dart_point" value="{{ m.get('dart_point', '') }}" placeholder="e.g., 10"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+            </div>
+          </div>
+        </div>
+
+        <!-- Pants Measurements -->
+        <div class="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
+          <h4 class="font-semibold text-gray-800 mb-4 text-lg">Pants Measurements</h4>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {% set pants = m.get('pants', {}) if order else {} %}
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Length</label>
+              <input type="text" name="pants_length" value="{{ pants.get('length', '') }}" placeholder="e.g., 40"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Waist</label>
+              <input type="text" name="pants_waist" value="{{ pants.get('waist', '') }}" placeholder="e.g., 30"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Thigh</label>
+              <input type="text" name="pants_thigh" value="{{ pants.get('thigh', '') }}" placeholder="e.g., 24"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Mori</label>
+              <input type="text" name="pants_mori" value="{{ pants.get('mori', '') }}" placeholder="e.g., 18"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Calf</label>
+              <input type="text" name="pants_calf" value="{{ pants.get('calf', '') }}" placeholder="e.g., 14"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Status -->
-    <div class="pt-4 border-t">
-      <label class="block text-gray-700 font-medium mb-2">Status</label>
-      <select name="status"
-              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300">
-        <option value="Pending" {% if (order and order.status == 'Pending') or not order %}selected{% endif %}>Pending</option>
-        <option value="In Progress" {% if order and order.status == 'In Progress' %}selected{% endif %}>In Progress</option>
-        <option value="Delivered" {% if order and order.status == 'Delivered' %}selected{% endif %}>Delivered</option>
-      </select>
-    </div>
+      <!-- Status -->
+      <div class="pt-6 border-t border-gray-200">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Order Status</label>
+        <select name="status"
+                class="w-full md:w-64 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition">
+          <option value="Pending" {% if (order and order.status == 'Pending') or not order %}selected{% endif %}>Pending</option>
+          <option value="Cancelled" {% if order and order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+          <option value="Delivered" {% if order and order.status == 'Delivered' %}selected{% endif %}>Delivered</option>
+        </select>
+      </div>
 
-    <!-- Buttons -->
-    <div class="flex justify-end pt-4 mt-6 space-x-4">
-      <a href="{{ url_for('view_customer', customer_id=customer.id) }}"
-         class="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-medium">
-        Cancel
-      </a>
-      <button type="submit"
-              class="px-6 py-3 bg-rosepink-600 text-white rounded-lg hover:bg-rosepink-700 transition font-medium shadow-md">
-        {% if order %}Save Changes{% else %}Create Order{% endif %}
-      </button>
-    </div>
-  </form>
+      <!-- Action Buttons -->
+      <div class="flex flex-col gap-4 pt-6 border-t border-gray-200">
+        
+        {% if order and order.id %}
+        <!-- Receipt Actions Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <!-- Download PDF -->
+          <a href="{{ url_for('generate_customer_receipt', order_id=order.id) }}" target="_blank"
+             class="px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg hover:shadow-green-500/30 transition font-semibold text-center flex items-center justify-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span>Download Receipt</span>
+          </a>
+          
+          <!-- Email Receipt -->
+          <button type="button" onclick="emailReceipt('{{ order.id }}')" id="emailBtn"
+                  class="px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition font-semibold flex items-center justify-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <span>Email Receipt</span>
+          </button>
+          
+          <!-- WhatsApp Receipt -->
+          <a href="{{ url_for('whatsapp_receipt', order_id=order.id) }}" target="_blank"
+             class="px-4 py-3 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-xl hover:shadow-lg hover:shadow-green-400/30 transition font-semibold flex items-center justify-center space-x-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            <span>WhatsApp</span>
+          </a>
+          
+          <!-- Tailor Sheet -->
+          <a href="{{ url_for('generate_tailor_sheet', order_id=order.id) }}" target="_blank"
+             class="px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:shadow-lg hover:shadow-purple-500/30 transition font-semibold flex items-center justify-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span>Tailor Sheet</span>
+          </a>
+        </div>
+        {% endif %}
+        
+        <!-- Save/Cancel Buttons Row -->
+        <div class="flex flex-col sm:flex-row justify-end gap-3">
+          <a href="{{ url_for('view_customer', customer_id=customer.id) }}"
+             class="px-6 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium text-center">
+            Cancel
+          </a>
+          
+          <button type="submit" id="saveOrderBtn"
+                  class="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:shadow-lg hover:shadow-primary-500/30 transition font-semibold">
+            {% if order and order.id %}Save Changes{% else %}Create Order{% endif %}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
+// Calculate Payments
+function calculatePayments() {
+  const materialCost = parseFloat(document.getElementById('material_cost').value) || 0;
+  const stitchingCost = parseFloat(document.getElementById('stitching_cost').value) || 0;
+  const advanceReceived = parseFloat(document.getElementById('advance_received').value) || 0;
+  
+  const totalPrice = materialCost + stitchingCost;
+  const balanceAmount = totalPrice - advanceReceived;
+  
+  document.getElementById('total_price').value = totalPrice.toFixed(2);
+  document.getElementById('balance_display').textContent = '₹' + balanceAmount.toFixed(2);
+}
+
+// Image Preview
+function previewImages(event) {
+  const preview = document.getElementById('image-preview');
+  preview.innerHTML = '';
+  preview.classList.remove('hidden');
+  
+  const files = event.target.files;
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      const div = document.createElement('div');
+      div.className = 'relative group';
+      div.innerHTML = `
+        <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg border-2 border-blue-200">
+        <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition rounded-lg flex items-center justify-center">
+          <span class="text-white text-xs">${file.name}</span>
+        </div>
+      `;
+      preview.appendChild(div);
+    };
+    
+    reader.readAsDataURL(file);
+  }
+}
+
+// AI Design Suggestions
+async function getAISuggestions() {
+  const dressType = document.getElementById('dress_type').value;
+  const occasion = document.getElementById('occasion').value;
+  const fabric = document.getElementById('fabric').value;
+  
+  if (!dressType || !occasion) return;
+  
+  const suggestionsDiv = document.getElementById('ai-suggestions');
+  const contentDiv = document.getElementById('suggestions-content');
+  
+  suggestionsDiv.classList.remove('hidden');
+  contentDiv.innerHTML = `
+    <div class="flex items-center space-x-2">
+      <div class="animate-spin h-5 w-5 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+      <span>Getting design suggestions...</span>
+    </div>
+  `;
+  
+  try {
+    const response = await fetch('/api/ai-suggestions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({dress_type: dressType, occasion: occasion, fabric: fabric})
+    });
+    
+    const data = await response.json();
+    
+    if (data.suggestions) {
+      contentDiv.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex items-start space-x-2">
+            <svg class="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <p class="text-gray-700">${data.suggestions}</p>
+          </div>
+        </div>
+      `;
+    } else {
+      contentDiv.innerHTML = '<p class="text-gray-600">Unable to get suggestions at this time.</p>';
+    }
+  } catch (error) {
+    contentDiv.innerHTML = '<p class="text-red-600">Error fetching suggestions. Please try again.</p>';
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  calculatePayments();
+});
+
 // Add/Remove Reference Links
 function addReferenceLink() {
-  const c = document.getElementById('reference-links-container');
-  const w = document.createElement('div');
-  w.className = 'flex mb-2';
-  const i = document.createElement('input');
-  i.type = 'url';
-  i.name = 'reference_link';
-  i.placeholder = 'Reference link';
-  i.className = 'flex-grow px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-rosepink-300';
-  const b = document.createElement('button');
-  b.type = 'button'; b.textContent = 'X';
-  b.className = 'bg-gray-300 text-gray-800 px-3 rounded-r-lg hover:bg-gray-400';
-  b.onclick = () => w.remove();
-  w.append(i, b); c.appendChild(w);
+  const container = document.getElementById('reference-links-container');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'flex gap-2';
+  
+  const input = document.createElement('input');
+  input.type = 'url';
+  input.name = 'reference_link';
+  input.placeholder = 'https://pinterest.com/design_idea';
+  input.className = 'flex-grow px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition';
+  
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'px-4 py-3 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition font-medium';
+  button.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+  button.onclick = () => wrapper.remove();
+  
+  wrapper.appendChild(input);
+  wrapper.appendChild(button);
+  container.appendChild(wrapper);
 }
+
 document.getElementById('add-link-btn').addEventListener('click', addReferenceLink);
+
+document.getElementById('orderForm').addEventListener('keydown', function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+  }
+});
 
 // Reset to Profile Measurements
 document.getElementById('resetMeasurements').addEventListener('click', () => {
   const customerMeasurements = {{ customer.measurements | tojson | safe }};
-  if (!customerMeasurements) return alert('No saved measurements in profile.');
-
-  const top = customerMeasurements.top || {};
-  const bottom = customerMeasurements.bottom || {};
-
-  for (const [k, v] of Object.entries(top)) {
-    const input = document.querySelector(`input[name="${k}"]`);
-    if (input) input.value = v;
+  if (!customerMeasurements) {
+    alert('No saved measurements in customer profile.');
+    return;
   }
-  for (const [k, v] of Object.entries(bottom)) {
-    const input = document.querySelector(`input[name="${k}"]`);
-    if (input) input.value = v;
+
+  // Map measurements fields
+  const measurementFields = [
+    'length', 'shoulder', 'armhole', 'upper_chest', 'chest', 'waist',
+    'stomach', 'hips', 'front_back_cross', 'sleeve_length', 'neck_front_back', 'dart_point'
+  ];
+  
+  for (const field of measurementFields) {
+    const input = document.querySelector(`input[name="${field}"]`);
+    if (input && customerMeasurements[field]) {
+      input.value = customerMeasurements[field];
+    }
+  }
+  
+  // Reset pants measurements
+  if (customerMeasurements.pants) {
+    const pantsFields = ['length', 'waist', 'thigh', 'mori', 'calf'];
+    for (const field of pantsFields) {
+      const input = document.querySelector(`input[name="pants_${field}"]`);
+      if (input && customerMeasurements.pants[field]) {
+        input.value = customerMeasurements.pants[field];
+      }
+    }
   }
 });
+
+// Email Receipt Function
+async function emailReceipt(orderId) {
+  const emailBtn = document.getElementById('emailBtn');
+  const originalHTML = emailBtn.innerHTML;
+  
+  // Show loading state
+  emailBtn.disabled = true;
+  emailBtn.innerHTML = `
+    <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <span>Sending...</span>
+  `;
+  
+  try {
+    const response = await fetch(`/order/email-receipt/${orderId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Show success animation
+      emailBtn.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>Sent!</span>
+      `;
+      emailBtn.classList.remove('from-blue-500', 'to-blue-600');
+      emailBtn.classList.add('from-green-500', 'to-green-600');
+      
+      // Reset after 3 seconds
+      setTimeout(() => {
+        emailBtn.innerHTML = originalHTML;
+        emailBtn.classList.remove('from-green-500', 'to-green-600');
+        emailBtn.classList.add('from-blue-500', 'to-blue-600');
+        emailBtn.disabled = false;
+      }, 3000);
+    } else {
+      throw new Error(data.message);
+    }
+  } catch (error) {
+    alert('Failed to send email: ' + error.message);
+    emailBtn.innerHTML = originalHTML;
+    emailBtn.disabled = false;
+  }
+}
+
+// Delete Image Function
+async function deleteImage(orderId, imageUrl, index) {
+  if (!confirm('Are you sure you want to delete this image?')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/order/delete-image/${orderId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ image_url: imageUrl })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Remove image from DOM
+      const imageElement = document.getElementById(`image-${index}`);
+      if (imageElement) {
+        imageElement.remove();
+      }
+      
+      // Show success message
+      alert('Image deleted successfully!');
+    } else {
+      alert('Failed to delete image: ' + data.message);
+    }
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    alert('Error deleting image. Please try again.');
+  }
+}
+
 </script>
 {% endblock %}

@@ -4,7 +4,11 @@
 flask
 grpcio==1.62.2
 firebase-admin
-
+reportlab
+Pillow
+openai
+reportlab
+qrcode
 
 #pip install grpcio --use-pep517 --no-build-isolation
 #pip install firebase-admin --no-deps
