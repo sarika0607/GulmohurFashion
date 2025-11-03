@@ -40,29 +40,97 @@ WHATSAPP_CONFIG = {
     'business_number': '919810137621',  # Format: CountryCode + Number (no + or spaces)
 }
 
-# 1. Initialize Firebase App
-try:
-    # load_dotenv()
+# --- Firestore Setup Imports ---
+import firebase_admin
+from firebase_admin import credentials, firestore, storage
+import json
+import os
 
-    firebase_key_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+# Global variables
+db = None
+bucket = None
 
-    cred = credentials.Certificate(firebase_key_path)
+def init_firebase():
+    """Initialize Firebase with proper error handling"""
+    global db, bucket
+    
+    try:
+        # Check if app already exists
+        try:
+            app = firebase_admin.get_app()
+            print("ℹ️ Firebase app already initialized")
+        except ValueError:
+            # App doesn't exist, initialize it
+            firebase_cred_json = os.environ.get('FIREBASE_CREDENTIALS')
+            
+            if firebase_cred_json:
+                print("🔄 Loading Firebase from environment variable...")
+                print(f"📏 Credential length: {len(firebase_cred_json)}")
+                
+                # Parse JSON
+                cred_dict = json.loads(firebase_cred_json)
+                print(f"✅ JSON parsed successfully. Project: {cred_dict.get('project_id')}")
+                
+                cred = credentials.Certificate(cred_dict)
+            else:
+                print("🔄 Loading Firebase from local file...")
+                cred = credentials.Certificate("firebase-key.json")
+            
+            firebase_admin.initialize_app(cred, {
+                'storageBucket': 'gulmohur-boutique.firebasestorage.app'
+            })
+            print("✅ Firebase app initialized")
+        
+        # Create clients
+        db = firestore.client()
+        print(f"✅ Firestore client created: {db is not None}")
 
-    firebase_admin.initialize_app(cred, {
-    'storageBucket': 'gulmohour-boutique.firebasestorage.app'
-})
-    db = firestore.client()
-except Exception as e:
-    print(f"Failed to initialize Firebase: {e}")
-    db = None
+        # Initialize Firebase Storage bucket
+        try:
+            bucket = storage.bucket()
+            print("Firebase Storage initialized successfully")
+        except Exception as e:
+            print(f"Firebase Storage initialization failed: {e}")
+            bucket = None
+        
+        return True
+        
+    except json.JSONDecodeError as e:
+        print(f"❌ JSON parsing error: {e}")
+        print(f"🔍 First 100 chars of credential: {os.environ.get('FIREBASE_CREDENTIALS', '')[:100]}")
+        db = None
+        bucket = None
+        return False
+        
+    except Exception as e:
+        print(f"❌ Firebase initialization failed: {e}")
+        print(f"🔍 Error type: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
+        db = None
+        bucket = None
+        return False
+
+# Initialize Firebase when module loads
+print("=" * 50)
+print("🚀 Starting Firebase initialization...")
+firebase_initialized = init_firebase()
+print(f"📊 Firebase initialized: {firebase_initialized}")
+print(f"📊 db is None: {db is None}")
+print(f"📊 bucket is None: {bucket is None}")
+print("=" * 50)
 
 # Global variable to store current user's ID
 CURRENT_USER_ID = None
 
 def initialize_auth():
     """Initializes authentication and sets the CURRENT_USER_ID."""
-    global CURRENT_USER_ID
-    if db:
+    global CURRENT_USER_ID, db
+    
+    if db is None:
+        print("⚠️ WARNING: db is None in initialize_auth!")
+        CURRENT_USER_ID = "no_db_connection"
+    else:
         try:
             if __initial_auth_token:
                 CURRENT_USER_ID = __app_id
@@ -71,9 +139,64 @@ def initialize_auth():
         except Exception as e:
             print(f"Authentication setup failed: {e}")
             CURRENT_USER_ID = "anonymous_user_failed_auth"
-    else:
-        CURRENT_USER_ID = "no_db_connection"
+    
     print(f"Using CURRENT_USER_ID: {CURRENT_USER_ID}")
+
+# --- Helper Functions ---
+
+# --- Firestore Helper Functions ---
+
+
+
+def get_collection_ref(collection_name):
+    """Returns the Firestore CollectionReference for the current user's private data."""
+    global db
+    
+    if db is None:
+        print(f"❌ ERROR: db is None when accessing collection '{collection_name}'")
+        print("🔄 Attempting to reinitialize Firebase...")
+        init_firebase()
+        
+        if db is None:
+            print(f"❌ CRITICAL: Still cannot access database after reinit!")
+            raise Exception("Firebase database not initialized. Check FIREBASE_CREDENTIALS environment variable.")
+    
+    return db.collection(collection_name)
+
+# # 1. Initialize Firebase App
+# try:
+#     # load_dotenv()
+
+#     firebase_key_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+
+#     cred = credentials.Certificate(firebase_key_path)
+
+#     firebase_admin.initialize_app(cred, {
+#     'storageBucket': 'gulmohour-boutique.firebasestorage.app'
+# })
+#     db = firestore.client()
+# except Exception as e:
+#     print(f"Failed to initialize Firebase: {e}")
+#     db = None
+
+# # Global variable to store current user's ID
+# CURRENT_USER_ID = None
+
+# def initialize_auth():
+#     """Initializes authentication and sets the CURRENT_USER_ID."""
+#     global CURRENT_USER_ID
+#     if db:
+#         try:
+#             if __initial_auth_token:
+#                 CURRENT_USER_ID = __app_id
+#             else:
+#                 CURRENT_USER_ID = "anonymous_user_default_id"
+#         except Exception as e:
+#             print(f"Authentication setup failed: {e}")
+#             CURRENT_USER_ID = "anonymous_user_failed_auth"
+#     else:
+#         CURRENT_USER_ID = "no_db_connection"
+#     print(f"Using CURRENT_USER_ID: {CURRENT_USER_ID}")
 
 # Image upload configuration
 UPLOAD_FOLDER = 'uploads/order_images'
@@ -97,13 +220,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Initialize Firebase Storage bucket
-try:
-    bucket = storage.bucket()
-    print("Firebase Storage initialized successfully")
-except Exception as e:
-    print(f"Firebase Storage initialization failed: {e}")
-    bucket = None
 
 # -----------------------------
 # Helper: Safe payments parsing
@@ -119,11 +235,6 @@ def parse_payments(payments):
         payments = []
     return [p for p in payments if isinstance(p, dict)]
 
-# --- Firestore Helper Functions ---
-
-def get_collection_ref(collection_name):
-    """Returns the Firestore CollectionReference for the current user's private data."""
-    return db.collection(collection_name)
 
 def get_customer_by_id(customer_id):
     """Fetches a single customer document by ID."""
