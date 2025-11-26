@@ -74,7 +74,11 @@ def init_firebase():
                 cred = credentials.Certificate(cred_dict)
             else:
                 print("🔄 Loading Firebase from local file...")
-                cred = credentials.Certificate("firebase-key.json")
+                # Path to your firebase-key.json (same folder as app.py)
+                cred_path = os.path.join(os.path.dirname(__file__), "firebase-key.json")
+                
+                # Load credentials from the JSON file
+                cred = credentials.Certificate(cred_path)
             
             firebase_admin.initialize_app(cred, {
                 'storageBucket': 'gulmohur-boutique.firebasestorage.app'
