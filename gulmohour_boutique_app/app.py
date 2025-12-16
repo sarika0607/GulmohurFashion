@@ -31,9 +31,9 @@ app.secret_key = 'gulmohour-secret'
 EMAIL_CONFIG = {
     'smtp_server': 'smtp.gmail.com',
     'smtp_port': 587,
-    'sender_email': 'contact.gulmohour@gmail.com',  # Your Gmail address
-    'sender_password': 'uyqd zzdc dtvn xbsb',        # Your App Password (16 chars)
-    'sender_name': 'Gulmohour Fashion'
+    'sender_email': 'contact.gulmohurfashion@gmail.com',  # Your Gmail address
+    'sender_password': 'jydv jtez uhce lizm',        # Your App Password (16 chars)
+    'sender_name': 'Gulmohur Fashion'
 }
 
 WHATSAPP_CONFIG = {
@@ -81,7 +81,7 @@ def init_firebase():
                 cred = credentials.Certificate(cred_path)
             
             firebase_admin.initialize_app(cred, {
-                'storageBucket': 'gulmohur-boutique.firebasestorage.app'
+                'storageBucket': 'gulmohur-fashion.firebasestorage.app'
             })
             print("✅ Firebase app initialized")
         
