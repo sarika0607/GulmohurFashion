@@ -340,7 +340,8 @@ def generate_receipt_pdf(order, customer):
     # ✅ LARGE CENTERED LOGO
     try:
         from reportlab.platypus import Image
-        logo_path = 'static/gulmohur_logo.jpg'
+        #logo_path = 'static/gulmohur_logo.jpg'
+        logo_path = os.path.join(os.path.dirname(__file__), 'static', 'gulmohur_logo.jpg')
         if os.path.exists(logo_path):
             logo = Image(logo_path, width=1.5*inch, height=1.5*inch)
             logo.hAlign = 'CENTER'
