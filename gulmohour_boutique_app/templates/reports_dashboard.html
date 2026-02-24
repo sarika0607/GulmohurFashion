@@ -8,7 +8,7 @@
 <div class="space-y-6">
 
   <!-- Quick Report Actions -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
     
     <!-- Boutique Overview -->
     <a href="{{ url_for('boutique_report') }}" class="card-hover glass-effect rounded-2xl p-6 shadow-lg border-2 border-green-100 group">
@@ -48,6 +48,25 @@
       </div>
     </a>
 
+    <!-- Customer List Report — NEW -->
+    <a href="{{ url_for('customer_list_report') }}" class="card-hover glass-effect rounded-2xl p-6 shadow-lg border-2 border-rose-100 group">
+      <div class="flex items-start justify-between mb-4">
+        <div class="p-3 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+          </svg>
+        </div>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-rose-600 transition">Customer List</h3>
+      <p class="text-sm text-gray-600 mb-4">Export contacts as PDF, Excel or share</p>
+      <div class="flex items-center space-x-2 text-rose-600 font-semibold text-sm">
+        <span>View Report</span>
+        <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+    </a>
+
     <!-- Customer Reports -->
     <div class="glass-effect rounded-2xl p-6 shadow-lg border-2 border-blue-100">
       <div class="flex items-start justify-between mb-4">
@@ -61,6 +80,7 @@
       <p class="text-sm text-gray-600 mb-4">Individual customer analytics below</p>
       <p class="text-blue-600 font-semibold text-sm">↓ Scroll down</p>
     </div>
+
   </div>
 
   <!-- Customer Reports Section -->
@@ -117,7 +137,6 @@
       {% endfor %}
     </div>
     {% else %}
-    <!-- Empty State -->
     <div class="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
       <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
