@@ -237,7 +237,7 @@ function sendEmail() {
   btn.innerHTML = '<span>Sending...</span>';
   feedback.innerHTML = '';
 
-  fetch('{{ url_for("customer_list_report_email") }}', {
+  fetch('/reports/customer-list/email', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email })
