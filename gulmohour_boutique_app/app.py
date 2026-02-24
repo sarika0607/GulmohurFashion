@@ -9,6 +9,7 @@ from firebase_admin import credentials, firestore, storage
 from firebase_admin import initialize_app, firestore, credentials, auth
 from werkzeug.utils import secure_filename
 from flask import send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, after_this_request
 
 import io
 from reportlab.lib.pagesizes import A4
@@ -1919,12 +1920,27 @@ def customer_list_report_xls():
 
     ws.row_dimensions[4].height = 22
 
-    buffer = io.BytesIO()
-    wb.save(buffer)
-    buffer.seek(0)
-    return send_file(buffer, as_attachment=True,
-                     download_name=f"customer_list_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    import tempfile, os
+
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
+    tmp_path = tmp.name
+    tmp.close()
+    wb.save(tmp_path)
+    
+    @after_this_request
+    def remove_file(response):
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
+        return response
+    
+    return send_file(
+        tmp_path,
+        as_attachment=True,
+        download_name=f"customer_list_{datetime.now().strftime('%Y%m%d')}.xlsx",
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
 
 @app.route('/reports/customer-list/whatsapp')
