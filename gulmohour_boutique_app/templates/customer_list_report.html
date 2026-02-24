@@ -1,137 +1,189 @@
-{% extends "base.html" %}
-{% block title %}Customer List Report{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}Customer List Report - Gulmohur{% endblock %}
+{% block page_title %}Customer List Report{% endblock %}
+{% block page_subtitle %}All active customers with contact details{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4 py-4">
+<div class="space-y-6">
 
-  <!-- Header -->
-  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-    <div>
-      <h2 class="fw-bold mb-0" style="color:#ad2a51;">
-        <i class="bi bi-people-fill me-2"></i>Customer List Report
-      </h2>
-      <p class="text-muted small mb-0 mt-1">All active customers with contact details</p>
+  <!-- Stats + Export Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+    <!-- Total count -->
+    <div class="glass-effect rounded-2xl p-6 shadow-lg border-l-4 border-rose-500">
+      <p class="text-sm font-medium text-gray-500 mb-1">Total Customers</p>
+      <p class="text-4xl font-bold text-rose-600">{{ customers|length }}</p>
     </div>
-    <a href="{{ url_for('reports_dashboard') }}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left me-1"></i>Back to Reports
-    </a>
-  </div>
 
-  <!-- Stats card -->
-  <div class="row mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm text-center py-3" style="border-left: 4px solid #ad2a51 !important;">
-        <div class="card-body py-2">
-          <div class="fs-2 fw-bold" style="color:#ad2a51;">{{ customers|length }}</div>
-          <div class="text-muted small">Total Customers</div>
+    <!-- Download PDF -->
+    <a href="{{ url_for('customer_list_report_pdf') }}"
+       class="card-hover glass-effect rounded-2xl p-6 shadow-lg border-2 border-red-100 group flex flex-col justify-between">
+      <div class="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-xl w-fit shadow-lg group-hover:scale-110 transition-transform mb-3">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-900 group-hover:text-red-600 transition">Download PDF</h3>
+        <p class="text-xs text-gray-500 mt-1">Save as PDF file</p>
+      </div>
+    </a>
+
+    <!-- Download Excel -->
+    <a href="{{ url_for('customer_list_report_xls') }}"
+       class="card-hover glass-effect rounded-2xl p-6 shadow-lg border-2 border-green-100 group flex flex-col justify-between">
+      <div class="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl w-fit shadow-lg group-hover:scale-110 transition-transform mb-3">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-900 group-hover:text-green-600 transition">Download Excel</h3>
+        <p class="text-xs text-gray-500 mt-1">Save as .xlsx file</p>
+      </div>
+    </a>
+
+    <!-- Share -->
+    <div class="glass-effect rounded-2xl p-6 shadow-lg border-2 border-gray-100 flex flex-col justify-between">
+      <div class="p-3 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl w-fit shadow-lg mb-3">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+        </svg>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-900 mb-3">Share</h3>
+        <div class="flex flex-col space-y-2">
+          <a href="{{ url_for('customer_list_report_whatsapp') }}" target="_blank"
+             class="inline-flex items-center space-x-2 px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition">
+            <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            <span>WhatsApp</span>
+          </a>
+          <button onclick="openEmailModal()"
+             class="inline-flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <span>Email</span>
+          </button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Action buttons -->
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-      <h6 class="fw-bold mb-3 text-muted"><i class="bi bi-download me-1"></i>Export & Share</h6>
-      <div class="d-flex flex-wrap gap-2">
-
-        <!-- Download PDF -->
-        <a href="{{ url_for('customer_list_report_pdf') }}" class="btn btn-danger">
-          <i class="bi bi-file-earmark-pdf-fill me-1"></i>Download PDF
-        </a>
-
-        <!-- Download XLS -->
-        <a href="{{ url_for('customer_list_report_xls') }}" class="btn btn-success">
-          <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i>Download Excel
-        </a>
-
-        <!-- WhatsApp -->
-        <a href="{{ url_for('customer_list_report_whatsapp') }}" class="btn btn-warning text-white" target="_blank">
-          <i class="bi bi-whatsapp me-1"></i>Send via WhatsApp
-        </a>
-
-        <!-- Email trigger -->
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#emailModal">
-          <i class="bi bi-envelope-fill me-1"></i>Send via Email
-        </button>
-
-      </div>
-    </div>
   </div>
 
   <!-- Customer Table -->
-  <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
-      <h6 class="fw-bold mb-0"><i class="bi bi-table me-1"></i>Customer Directory</h6>
-      <input type="text" id="searchInput" class="form-control form-control-sm w-auto"
-             placeholder="Search name or phone..." style="min-width:200px;">
+  <div class="glass-effect rounded-2xl shadow-lg overflow-hidden">
+    <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <h3 class="text-xl font-display font-bold text-gray-900">Customer Directory</h3>
+      <input type="text" id="searchInput" placeholder="Search by name or phone..."
+             class="w-full sm:w-72 px-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 transition">
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0" id="customerTable">
-          <thead style="background:#fce8eb;">
-            <tr>
-              <th class="px-3 py-3 text-muted small fw-bold">#</th>
-              <th class="py-3 text-muted small fw-bold">CUSTOMER ID</th>
-              <th class="py-3 text-muted small fw-bold">NAME</th>
-              <th class="py-3 text-muted small fw-bold">PHONE</th>
-              <th class="py-3 text-muted small fw-bold">EMAIL</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for c in customers %}
-            <tr class="customer-row">
-              <td class="px-3 text-muted small">{{ loop.index }}</td>
-              <td><span class="badge bg-light text-dark border">#{{ c.customer_numeric_id or 'N/A' }}</span></td>
-              <td>
-                <a href="{{ url_for('view_customer', customer_id=c.id) }}"
-                   class="fw-semibold text-decoration-none" style="color:#ad2a51;">
-                  {{ c.name }}
-                </a>
-              </td>
-              <td>
-                <a href="tel:{{ c.phone }}" class="text-decoration-none text-dark">
-                  <i class="bi bi-telephone-fill me-1 text-success small"></i>{{ c.phone or '—' }}
-                </a>
-              </td>
-              <td class="text-muted small">{{ c.email or '—' }}</td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="5" class="text-center py-5 text-muted">
-                <i class="bi bi-people fs-3 d-block mb-2"></i>No customers found.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gradient-to-r from-rose-50 to-pink-50 text-left">
+            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-10">#</th>
+            <th class="px-4 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
+            <th class="px-4 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
+            <th class="px-4 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</th>
+            <th class="px-4 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for c in customers %}
+          <tr class="customer-row hover:bg-rose-50/40 transition-colors">
+            <td class="px-6 py-4 text-gray-400 text-xs">{{ loop.index }}</td>
+            <td class="px-4 py-4">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                #{{ c.customer_numeric_id or 'N/A' }}
+              </span>
+            </td>
+            <td class="px-4 py-4">
+              <a href="{{ url_for('view_customer', customer_id=c.id) }}"
+                 class="font-semibold text-gray-900 hover:text-rose-600 transition">
+                {{ c.name }}
+              </a>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                <span class="text-gray-700 font-medium">{{ c.phone or '—' }}</span>
+              </div>
+            </td>
+            <td class="px-4 py-4 text-gray-500">{{ c.email or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="px-6 py-16 text-center text-gray-400">
+              <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              No customers found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+
+    <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+      <p class="text-sm text-gray-500" id="rowCount">Showing {{ customers|length }} customers</p>
+    </div>
+  </div>
+
+  <!-- Back -->
+  <div>
+    <a href="{{ url_for('reports_dashboard') }}"
+       class="inline-flex items-center space-x-2 px-5 py-2.5 bg-white border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      <span>Back to Reports</span>
+    </a>
   </div>
 
 </div>
 
 <!-- Email Modal -->
-<div class="modal fade" id="emailModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header" style="background:#ad2a51;">
-        <h5 class="modal-title text-white"><i class="bi bi-envelope-fill me-2"></i>Email Customer List</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<div id="emailModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4" style="display:none;">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-bold text-gray-900">Email Customer List</h3>
+        <p class="text-sm text-gray-500 mt-0.5">The PDF will be attached and sent.</p>
       </div>
-      <div class="modal-body p-4">
-        <p class="text-muted small mb-3">The customer list PDF will be sent to the email address below.</p>
-        <label class="form-label fw-semibold">Recipient Email</label>
-        <input type="email" id="recipientEmail" class="form-control"
-               placeholder="e.g. owner@example.com">
-        <div id="emailFeedback" class="mt-2 small"></div>
+      <button onclick="closeEmailModal()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Recipient Email</label>
+        <input type="email" id="recipientEmail" placeholder="e.g. owner@example.com"
+               class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 transition">
       </div>
-      <div class="modal-footer border-0">
-        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary btn-sm" id="sendEmailBtn" onclick="sendEmail()">
-          <i class="bi bi-send-fill me-1"></i>Send Report
-        </button>
-      </div>
+      <div id="emailFeedback" class="text-sm min-h-[20px]"></div>
+    </div>
+    <div class="p-6 pt-0 flex justify-end space-x-3">
+      <button onclick="closeEmailModal()"
+              class="px-4 py-2.5 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition text-sm font-medium">
+        Cancel
+      </button>
+      <button id="sendEmailBtn" onclick="sendEmail()"
+              class="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transition text-sm font-semibold inline-flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+        <span>Send Report</span>
+      </button>
     </div>
   </div>
 </div>
@@ -139,50 +191,70 @@
 
 {% block scripts %}
 <script>
-// Live search filter
-document.getElementById('searchInput').addEventListener('input', function () {
+// Live search
+const searchInput = document.getElementById('searchInput');
+const rowCount = document.getElementById('rowCount');
+const totalRows = {{ customers|length }};
+
+searchInput.addEventListener('input', function () {
   const q = this.value.toLowerCase();
+  let visible = 0;
   document.querySelectorAll('.customer-row').forEach(row => {
-    const text = row.innerText.toLowerCase();
-    row.style.display = text.includes(q) ? '' : 'none';
+    const match = row.innerText.toLowerCase().includes(q);
+    row.style.display = match ? '' : 'none';
+    if (match) visible++;
   });
+  rowCount.textContent = q ? `Showing ${visible} of ${totalRows} customers` : `Showing ${totalRows} customers`;
 });
 
-// Send email
+// Email modal
+function openEmailModal() {
+  document.getElementById('emailModal').style.display = 'flex';
+}
+function closeEmailModal() {
+  document.getElementById('emailModal').style.display = 'none';
+  document.getElementById('emailFeedback').innerHTML = '';
+  document.getElementById('recipientEmail').value = '';
+  resetSendBtn();
+}
+function resetSendBtn() {
+  const btn = document.getElementById('sendEmailBtn');
+  btn.disabled = false;
+  btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg><span>Send Report</span>`;
+}
+
 function sendEmail() {
   const email = document.getElementById('recipientEmail').value.trim();
   const feedback = document.getElementById('emailFeedback');
   const btn = document.getElementById('sendEmailBtn');
 
   if (!email) {
-    feedback.innerHTML = '<span class="text-danger">Please enter an email address.</span>';
+    feedback.innerHTML = '<span class="text-red-500">Please enter an email address.</span>';
     return;
   }
 
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...';
+  btn.innerHTML = '<span>Sending...</span>';
   feedback.innerHTML = '';
 
   fetch('{{ url_for("customer_list_report_email") }}', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email })
+    body: JSON.stringify({ email })
   })
   .then(r => r.json())
   .then(data => {
     if (data.success) {
-      feedback.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>${data.message}</span>`;
-      btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Sent!';
+      feedback.innerHTML = `<span class="text-green-600 font-medium">✓ ${data.message}</span>`;
+      btn.innerHTML = '<span>✓ Sent!</span>';
     } else {
-      feedback.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle me-1"></i>${data.message}</span>`;
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bi bi-send-fill me-1"></i>Send Report';
+      feedback.innerHTML = `<span class="text-red-500">${data.message}</span>`;
+      resetSendBtn();
     }
   })
   .catch(() => {
-    feedback.innerHTML = '<span class="text-danger">Network error. Please try again.</span>';
-    btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-send-fill me-1"></i>Send Report';
+    feedback.innerHTML = '<span class="text-red-500">Network error. Please try again.</span>';
+    resetSendBtn();
   });
 }
 </script>
