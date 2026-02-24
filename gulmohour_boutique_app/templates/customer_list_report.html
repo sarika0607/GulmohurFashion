@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Customer List Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-0" style="color:#ad2a51;">
+        <i class="bi bi-people-fill me-2"></i>Customer List Report
+      </h2>
+      <p class="text-muted small mb-0 mt-1">All active customers with contact details</p>
+    </div>
+    <a href="{{ url_for('reports_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back to Reports
+    </a>
+  </div>
+
+  <!-- Stats card -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3" style="border-left: 4px solid #ad2a51 !important;">
+        <div class="card-body py-2">
+          <div class="fs-2 fw-bold" style="color:#ad2a51;">{{ customers|length }}</div>
+          <div class="text-muted small">Total Customers</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <h6 class="fw-bold mb-3 text-muted"><i class="bi bi-download me-1"></i>Export & Share</h6>
+      <div class="d-flex flex-wrap gap-2">
+
+        <!-- Download PDF -->
+        <a href="{{ url_for('customer_list_report_pdf') }}" class="btn btn-danger">
+          <i class="bi bi-file-earmark-pdf-fill me-1"></i>Download PDF
+        </a>
+
+        <!-- Download XLS -->
+        <a href="{{ url_for('customer_list_report_xls') }}" class="btn btn-success">
+          <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i>Download Excel
+        </a>
+
+        <!-- WhatsApp -->
+        <a href="{{ url_for('customer_list_report_whatsapp') }}" class="btn btn-warning text-white" target="_blank">
+          <i class="bi bi-whatsapp me-1"></i>Send via WhatsApp
+        </a>
+
+        <!-- Email trigger -->
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#emailModal">
+          <i class="bi bi-envelope-fill me-1"></i>Send via Email
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Table -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+      <h6 class="fw-bold mb-0"><i class="bi bi-table me-1"></i>Customer Directory</h6>
+      <input type="text" id="searchInput" class="form-control form-control-sm w-auto"
+             placeholder="Search name or phone..." style="min-width:200px;">
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" id="customerTable">
+          <thead style="background:#fce8eb;">
+            <tr>
+              <th class="px-3 py-3 text-muted small fw-bold">#</th>
+              <th class="py-3 text-muted small fw-bold">CUSTOMER ID</th>
+              <th class="py-3 text-muted small fw-bold">NAME</th>
+              <th class="py-3 text-muted small fw-bold">PHONE</th>
+              <th class="py-3 text-muted small fw-bold">EMAIL</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in customers %}
+            <tr class="customer-row">
+              <td class="px-3 text-muted small">{{ loop.index }}</td>
+              <td><span class="badge bg-light text-dark border">#{{ c.customer_numeric_id or 'N/A' }}</span></td>
+              <td>
+                <a href="{{ url_for('view_customer', customer_id=c.id) }}"
+                   class="fw-semibold text-decoration-none" style="color:#ad2a51;">
+                  {{ c.name }}
+                </a>
+              </td>
+              <td>
+                <a href="tel:{{ c.phone }}" class="text-decoration-none text-dark">
+                  <i class="bi bi-telephone-fill me-1 text-success small"></i>{{ c.phone or '—' }}
+                </a>
+              </td>
+              <td class="text-muted small">{{ c.email or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center py-5 text-muted">
+                <i class="bi bi-people fs-3 d-block mb-2"></i>No customers found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Email Modal -->
+<div class="modal fade" id="emailModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header" style="background:#ad2a51;">
+        <h5 class="modal-title text-white"><i class="bi bi-envelope-fill me-2"></i>Email Customer List</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted small mb-3">The customer list PDF will be sent to the email address below.</p>
+        <label class="form-label fw-semibold">Recipient Email</label>
+        <input type="email" id="recipientEmail" class="form-control"
+               placeholder="e.g. owner@example.com">
+        <div id="emailFeedback" class="mt-2 small"></div>
+      </div>
+      <div class="modal-footer border-0">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="sendEmailBtn" onclick="sendEmail()">
+          <i class="bi bi-send-fill me-1"></i>Send Report
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live search filter
+document.getElementById('searchInput').addEventListener('input', function () {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.customer-row').forEach(row => {
+    const text = row.innerText.toLowerCase();
+    row.style.display = text.includes(q) ? '' : 'none';
+  });
+});
+
+// Send email
+function sendEmail() {
+  const email = document.getElementById('recipientEmail').value.trim();
+  const feedback = document.getElementById('emailFeedback');
+  const btn = document.getElementById('sendEmailBtn');
+
+  if (!email) {
+    feedback.innerHTML = '<span class="text-danger">Please enter an email address.</span>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...';
+  feedback.innerHTML = '';
+
+  fetch('{{ url_for("customer_list_report_email") }}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      feedback.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>${data.message}</span>`;
+      btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Sent!';
+    } else {
+      feedback.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle me-1"></i>${data.message}</span>`;
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-send-fill me-1"></i>Send Report';
+    }
+  })
+  .catch(() => {
+    feedback.innerHTML = '<span class="text-danger">Network error. Please try again.</span>';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-send-fill me-1"></i>Send Report';
+  });
+}
+</script>
+{% endblock %}
