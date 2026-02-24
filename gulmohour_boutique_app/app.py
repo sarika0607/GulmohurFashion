@@ -1748,6 +1748,319 @@ def delete_customer(customer_id):
 
     return redirect(url_for('customers'))
 
+# ============================================================
+# CUSTOMER LIST REPORT
+# ============================================================
+
+@app.route('/reports/customer-list')
+def customer_list_report():
+    """Show customer list report page with phone numbers."""
+    customers_ref = get_collection_ref('customers')
+    customers = []
+    if customers_ref:
+        for doc in customers_ref.stream():
+            c = doc.to_dict()
+            if not c.get('is_deleted', False):
+                c['id'] = doc.id
+                customers.append(c)
+    customers.sort(key=lambda c: c.get('name', '').lower())
+    return render_template('customer_list_report.html', customers=customers)
+
+
+@app.route('/reports/customer-list/pdf')
+def customer_list_report_pdf():
+    """Download customer list as PDF."""
+    customers_ref = get_collection_ref('customers')
+    customers = []
+    if customers_ref:
+        for doc in customers_ref.stream():
+            c = doc.to_dict()
+            if not c.get('is_deleted', False):
+                c['id'] = doc.id
+                customers.append(c)
+    customers.sort(key=lambda c: c.get('name', '').lower())
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            rightMargin=30, leftMargin=30,
+                            topMargin=30, bottomMargin=30)
+    elements = []
+    styles = getSampleStyleSheet()
+
+    # Title
+    title_style = ParagraphStyle('Title', parent=styles['Normal'],
+                                  fontSize=18, alignment=TA_CENTER,
+                                  textColor=colors.HexColor('#ad2a51'),
+                                  spaceAfter=4, fontName='Helvetica-Bold')
+    sub_style = ParagraphStyle('Sub', parent=styles['Normal'],
+                                fontSize=9, alignment=TA_CENTER,
+                                textColor=colors.grey, spaceAfter=16)
+
+    elements.append(Paragraph(SHOP_DETAILS['shop_name'], title_style))
+    elements.append(Paragraph('Customer List Report', sub_style))
+    elements.append(Paragraph(f"Generated on: {datetime.now().strftime('%d %B %Y')}", sub_style))
+    elements.append(Spacer(1, 10))
+
+    # Table header + rows
+    table_data = [['#', 'Customer ID', 'Name', 'Phone', 'Email']]
+    for idx, c in enumerate(customers, 1):
+        table_data.append([
+            str(idx),
+            str(c.get('customer_numeric_id', 'N/A')),
+            c.get('name', 'N/A'),
+            c.get('phone', 'N/A'),
+            c.get('email', 'N/A') or '-',
+        ])
+
+    col_widths = [0.4*inch, 0.9*inch, 2.2*inch, 1.4*inch, 2.3*inch]
+    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#ad2a51')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (0, 0), (1, -1), 'CENTER'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#fce8eb')]),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dddddd')),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(table)
+
+    elements.append(Spacer(1, 16))
+    elements.append(Paragraph(f"Total Customers: {len(customers)}", 
+                               ParagraphStyle('Footer', parent=styles['Normal'],
+                                              fontSize=9, fontName='Helvetica-Bold')))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True,
+                     download_name=f"customer_list_{datetime.now().strftime('%Y%m%d')}.pdf",
+                     mimetype='application/pdf')
+
+
+@app.route('/reports/customer-list/xls')
+def customer_list_report_xls():
+    """Download customer list as XLS (Excel)."""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    customers_ref = get_collection_ref('customers')
+    customers = []
+    if customers_ref:
+        for doc in customers_ref.stream():
+            c = doc.to_dict()
+            if not c.get('is_deleted', False):
+                c['id'] = doc.id
+                customers.append(c)
+    customers.sort(key=lambda c: c.get('name', '').lower())
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Customer List"
+
+    # Title row
+    ws.merge_cells('A1:E1')
+    ws['A1'] = f"{SHOP_DETAILS['shop_name']} - Customer List Report"
+    ws['A1'].font = Font(bold=True, size=14, color='AD2A51')
+    ws['A1'].alignment = Alignment(horizontal='center')
+
+    ws.merge_cells('A2:E2')
+    ws['A2'] = f"Generated on: {datetime.now().strftime('%d %B %Y')}"
+    ws['A2'].font = Font(size=9, color='888888')
+    ws['A2'].alignment = Alignment(horizontal='center')
+
+    # Header row
+    headers = ['#', 'Customer ID', 'Name', 'Phone', 'Email']
+    header_fill = PatternFill('solid', start_color='AD2A51')
+    thin = Side(style='thin', color='DDDDDD')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=4, column=col, value=header)
+        cell.font = Font(bold=True, color='FFFFFF', size=10)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+
+    # Data rows
+    alt_fill = PatternFill('solid', start_color='FCE8EB')
+    for idx, c in enumerate(customers, 1):
+        row = idx + 4
+        row_fill = alt_fill if idx % 2 == 0 else None
+        row_data = [
+            idx,
+            c.get('customer_numeric_id', 'N/A'),
+            c.get('name', 'N/A'),
+            c.get('phone', 'N/A'),
+            c.get('email', '') or '',
+        ]
+        for col, value in enumerate(row_data, 1):
+            cell = ws.cell(row=row, column=col, value=value)
+            cell.font = Font(size=10)
+            cell.border = border
+            cell.alignment = Alignment(vertical='center')
+            if row_fill:
+                cell.fill = row_fill
+
+    # Total row
+    total_row = len(customers) + 5
+    ws.cell(row=total_row, column=1, value='Total')
+    ws.cell(row=total_row, column=1).font = Font(bold=True, size=10)
+    ws.cell(row=total_row, column=2, value=len(customers))
+    ws.cell(row=total_row, column=2).font = Font(bold=True, size=10)
+
+    # Column widths
+    col_widths_map = {'A': 6, 'B': 13, 'C': 28, 'D': 18, 'E': 32}
+    for col_letter, width in col_widths_map.items():
+        ws.column_dimensions[col_letter].width = width
+
+    ws.row_dimensions[4].height = 22
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True,
+                     download_name=f"customer_list_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+@app.route('/reports/customer-list/whatsapp')
+def customer_list_report_whatsapp():
+    """Send customer list summary via WhatsApp to the shop owner."""
+    import urllib.parse
+
+    customers_ref = get_collection_ref('customers')
+    customers = []
+    if customers_ref:
+        for doc in customers_ref.stream():
+            c = doc.to_dict()
+            if not c.get('is_deleted', False):
+                c['id'] = doc.id
+                customers.append(c)
+    customers.sort(key=lambda c: c.get('name', '').lower())
+
+    lines = [f"*{SHOP_DETAILS['shop_name']} - Customer List*",
+             f"_{datetime.now().strftime('%d %B %Y')}_",
+             f"Total Customers: {len(customers)}", ""]
+
+    for idx, c in enumerate(customers, 1):
+        lines.append(f"{idx}. {c.get('name', 'N/A')} - {c.get('phone', 'N/A')}")
+
+    message = '\n'.join(lines)
+    encoded = urllib.parse.quote(message)
+    business_number = WHATSAPP_CONFIG['business_number']
+    return redirect(f"https://wa.me/{business_number}?text={encoded}")
+
+
+@app.route('/reports/customer-list/email', methods=['POST'])
+def customer_list_report_email():
+    """Email customer list PDF to the provided email address."""
+    from flask import jsonify
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.mime.base import MIMEBase
+    from email import encoders
+
+    recipient_email = request.json.get('email', '').strip()
+    if not recipient_email:
+        return jsonify({'success': False, 'message': 'Email address required'}), 400
+
+    customers_ref = get_collection_ref('customers')
+    customers = []
+    if customers_ref:
+        for doc in customers_ref.stream():
+            c = doc.to_dict()
+            if not c.get('is_deleted', False):
+                c['id'] = doc.id
+                customers.append(c)
+    customers.sort(key=lambda c: c.get('name', '').lower())
+
+    # Generate PDF inline (reuse PDF logic)
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            rightMargin=30, leftMargin=30,
+                            topMargin=30, bottomMargin=30)
+    elements = []
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle('Title', parent=styles['Normal'],
+                                  fontSize=18, alignment=TA_CENTER,
+                                  textColor=colors.HexColor('#ad2a51'),
+                                  spaceAfter=4, fontName='Helvetica-Bold')
+    sub_style = ParagraphStyle('Sub', parent=styles['Normal'],
+                                fontSize=9, alignment=TA_CENTER,
+                                textColor=colors.grey, spaceAfter=16)
+
+    elements.append(Paragraph(SHOP_DETAILS['shop_name'], title_style))
+    elements.append(Paragraph('Customer List Report', sub_style))
+    elements.append(Paragraph(f"Generated on: {datetime.now().strftime('%d %B %Y')}", sub_style))
+    elements.append(Spacer(1, 10))
+
+    table_data = [['#', 'Customer ID', 'Name', 'Phone', 'Email']]
+    for idx, c in enumerate(customers, 1):
+        table_data.append([str(idx), str(c.get('customer_numeric_id', 'N/A')),
+                           c.get('name', 'N/A'), c.get('phone', 'N/A'),
+                           c.get('email', '') or '-'])
+
+    col_widths = [0.4*inch, 0.9*inch, 2.2*inch, 1.4*inch, 2.3*inch]
+    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#ad2a51')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#fce8eb')]),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dddddd')),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(table)
+    elements.append(Spacer(1, 16))
+    elements.append(Paragraph(f"Total Customers: {len(customers)}",
+                               ParagraphStyle('Footer', parent=styles['Normal'],
+                                              fontSize=9, fontName='Helvetica-Bold')))
+    doc.build(elements)
+    buffer.seek(0)
+
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = f"{EMAIL_CONFIG['sender_name']} <{EMAIL_CONFIG['sender_email']}>"
+        msg['To'] = recipient_email
+        msg['Subject'] = f"Customer List - {SHOP_DETAILS['shop_name']} - {datetime.now().strftime('%d %b %Y')}"
+
+        body = f"""Please find attached the customer list for {SHOP_DETAILS['shop_name']}.
+
+Total Customers: {len(customers)}
+Generated on: {datetime.now().strftime('%d %B %Y')}
+
+Best regards,
+{SHOP_DETAILS['owner_name']}
+{SHOP_DETAILS['shop_name']}"""
+        msg.attach(MIMEText(body, 'plain'))
+
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(buffer.read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition',
+                        f'attachment; filename=customer_list_{datetime.now().strftime("%Y%m%d")}.pdf')
+        msg.attach(part)
+
+        server = smtplib.SMTP(EMAIL_CONFIG['smtp_server'], EMAIL_CONFIG['smtp_port'])
+        server.starttls()
+        server.login(EMAIL_CONFIG['sender_email'], EMAIL_CONFIG['sender_password'])
+        server.send_message(msg)
+        server.quit()
+
+        return jsonify({'success': True, 'message': f'Customer list sent to {recipient_email}'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to send email: {str(e)}'}), 500
+        
 from flask import jsonify
 
 @app.route('/api/ai-suggestions', methods=['POST'])
