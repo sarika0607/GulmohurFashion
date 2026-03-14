@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.dirname(__file__))
 
 # --- Config (must match app.py) ---
-SENDGRID_API_KEY = 'YOUR_SENDGRID_API_KEY_HERE'
+SENDGRID_API_KEY = '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'
 
 EMAIL_CONFIG = {
     'sender_email': 'contact.gulmohurfashion@gmail.com',
