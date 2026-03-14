@@ -2196,5 +2196,46 @@ def orders_by_period():
         flash(f"Error fetching orders: {e}", 'error')
         return render_template('orders_by_period.html', orders=[], from_date=from_date, to_date=to_date)
 
+@app.route('/reports/delivery-tomorrow-whatsapp')
+def delivery_tomorrow_whatsapp():
+    """Send list of orders due tomorrow to shop owner's WhatsApp."""
+    import urllib.parse
+    
+    tomorrow = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+    tomorrow_display = (datetime.now() + timedelta(days=1)).strftime('%d %b %Y')
+    
+    orders = fetch_all_orders()
+    due_tomorrow = [
+        o for o in orders
+        if o.get('delivery_date') == tomorrow
+        and o.get('status') not in ['Completed', 'Delivered']
+    ]
+
+    if not due_tomorrow:
+        message = f"✅ *Gulmohur - Delivery Reminder*\n\nNo deliveries due tomorrow ({tomorrow_display})."
+    else:
+        lines = [
+            f"📦 *Gulmohur - Deliveries Tomorrow*",
+            f"_{tomorrow_display}_",
+            f"Total Orders: {len(due_tomorrow)}",
+            ""
+        ]
+        for idx, o in enumerate(due_tomorrow, 1):
+            customer = get_customer_by_id(o.get('customer_id', ''))
+            name = customer.get('name', 'Unknown') if customer else o.get('customer_name', 'Unknown')
+            phone = customer.get('phone', 'N/A') if customer else 'N/A'
+            dress = o.get('dress_type', 'N/A')
+            order_num = o.get('order_number', 'N/A')
+            lines.append(f"{idx}. *{name}*")
+            lines.append(f"   📞 {phone}")
+            lines.append(f"   👗 {dress} | Order #{order_num}")
+            lines.append("")
+        message = '\n'.join(lines)
+
+    encoded = urllib.parse.quote(message)
+    business_number = WHATSAPP_CONFIG['business_number']
+    from flask import redirect as flask_redirect
+    return flask_redirect(f"https://wa.me/{business_number}?text={encoded}")
+
 if __name__ == "__main__":
     app.run()
