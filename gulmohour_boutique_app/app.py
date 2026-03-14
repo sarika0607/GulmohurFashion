@@ -29,6 +29,8 @@ __initial_auth_token = os.environ.get('AUTH_TOKEN', None)
 app = Flask(__name__)
 app.secret_key = 'gulmohour-secret'
 
+SENDGRID_API_KEY = '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'
+
 EMAIL_CONFIG = {
     'smtp_server': 'smtp.gmail.com',
     'smtp_port': 587,
@@ -37,9 +39,37 @@ EMAIL_CONFIG = {
     'sender_name': 'Gulmohur Fashion'
 }
 
+
 WHATSAPP_CONFIG = {
     'business_number': '919810137621',  # Format: CountryCode + Number (no + or spaces)
 }
+
+def send_email_via_sendgrid(to_email, subject, body, attachment_bytes=None, attachment_filename=None):
+    import urllib.request, base64
+    mail_data = {
+        "personalizations": [{"to": [{"email": to_email}]}],
+        "from": {"email": EMAIL_CONFIG['sender_email'], "name": EMAIL_CONFIG['sender_name']},
+        "subject": subject,
+        "content": [{"type": "text/plain", "value": body}]
+    }
+    if attachment_bytes and attachment_filename:
+        mail_data["attachments"] = [{
+            "content": base64.b64encode(attachment_bytes).decode(),
+            "filename": attachment_filename,
+            "type": "application/octet-stream"
+        }]
+    data = json.dumps(mail_data).encode('utf-8')
+    req = urllib.request.Request(
+        'https://api.sendgrid.com/v3/mail/send',
+        data=data,
+        headers={
+            'Authorization': f'Bearer {SENDGRID_API_KEY}',
+            'Content-Type': 'application/json'
+        },
+        method='POST'
+    )
+    with urllib.request.urlopen(req) as response:
+        return response.status == 202
 
 # --- Firestore Setup Imports ---
 import firebase_admin
@@ -2067,11 +2097,13 @@ Best regards,
                         f'attachment; filename=customer_list_{datetime.now().strftime("%Y%m%d")}.pdf')
         msg.attach(part)
 
-        server = smtplib.SMTP(EMAIL_CONFIG['smtp_server'], EMAIL_CONFIG['smtp_port'])
-        server.starttls()
-        server.login(EMAIL_CONFIG['sender_email'], EMAIL_CONFIG['sender_password'])
-        server.send_message(msg)
-        server.quit()
+        send_email_via_sendgrid(
+            to_email=recipient_email,
+            subject=f"Customer List - {SHOP_DETAILS['shop_name']} - {datetime.now().strftime('%d %b %Y')}",
+            body=body,
+            attachment_bytes=buffer.read(),
+            attachment_filename=f"customer_list_{datetime.now().strftime('%Y%m%d')}.pdf"
+        )
 
         return jsonify({'success': True, 'message': f'Customer list sent to {recipient_email}'})
     except Exception as e:
