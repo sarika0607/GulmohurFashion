@@ -124,7 +124,7 @@ Have a great day!
         f"",
         f"Please prepare and confirm deliveries.",
         f"",
-        f"— Gulmohur Scheduler",
+        f"— Team Gulmohur",
     ]
 
     body = '\n'.join(lines)
